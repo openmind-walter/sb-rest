@@ -4,7 +4,7 @@ import { ApiMessage, ApiResponseDto } from 'src/common/api.response';
 import { FancyService } from './fancy.service';
 
 
-@ApiTags('api')
+@ApiTags('Fancy')
 @Controller('api')
 export class FanancyController {
 
@@ -14,7 +14,7 @@ export class FanancyController {
     getActiveBm(@Param('EVENT_ID') EVENT_ID: string) {
         try {
             const data = this.fancnyService.getActiveBm(EVENT_ID)
-            return new ApiResponseDto(ApiMessage.SUCCESS, data);
+            return new ApiResponseDto(ApiMessage.SUCCESS, data ?? []);
         } catch (err) {
             console.error(err)
         }
@@ -25,7 +25,7 @@ export class FanancyController {
     getActiveBMS() {
         try {
             const data = this.fancnyService.getActiveBMs();
-            return new ApiResponseDto(ApiMessage.SUCCESS, data);
+            return new ApiResponseDto(ApiMessage.SUCCESS, data ?? []);
         } catch (err) {
             console.error(err)
         }
@@ -37,7 +37,7 @@ export class FanancyController {
     getActiveFancy(@Param('EVENT_ID') EVENT_ID: string) {
         try {
             const data = this.fancnyService.getActiveFancy(EVENT_ID);
-            return new ApiResponseDto(ApiMessage.SUCCESS, data)
+            return new ApiResponseDto(ApiMessage.SUCCESS, data ?? [])
         } catch (err) {
             console.error(err)
         }
