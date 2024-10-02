@@ -33,8 +33,7 @@ class Runner {
 }
 
 
-export class Event {
-    status: number;
+export class BookMarkEvent {
     data: Record<string, Runner>; // Key is a string, value is a Runner object
     event_id: string;
 }
