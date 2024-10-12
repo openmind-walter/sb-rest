@@ -1,51 +1,35 @@
-
-
 import { Injectable } from '@nestjs/common';
-import { getMockFancies } from 'src/data/fancy';
-
-
-
+import { LoggerService } from 'src/common/logger.service';
+import configuration from 'src/configuration';
+import { getMockFancies, getMockFancy } from 'src/data/fancy';
+import { RedisMultiService } from 'src/redis/redis.multi.service';
+import { CachedKeys } from 'src/utlities';
 
 
 @Injectable()
 export class FancyService {
+    constructor(private redisMutiService: RedisMultiService, private logger: LoggerService) { }
+    async getFanciesEvents() {
+        try {
+            return await getMockFancies();
+        }
+        catch (error) {
+            this.logger.error(`Get fancy events: ${error.message}`, FancyService.name);
 
-
-
-    getFanciesEvents() {
-        return getMockFancies();
+        }
     }
+    async getFancyEvent(eventId: string, updateCache = true) {
+        try {
+            const Fancyevent = await getMockFancy(eventId)
+            if (Fancyevent && updateCache)
+                this.redisMutiService.set(configuration.redis.client.clientBackEnd,
+                    CachedKeys.getFacnyEvent(eventId), 3600, JSON.stringify(Fancyevent));
+            return Fancyevent;
+        }
+        catch (error) {
+            this.logger.error(`Get fancy event: ${error.message}`, FancyService.name);
 
-
-    getFancyEvent(event_id: string) {
-        return getMockFancies().find(f => f.event_id == event_id) || null;
+        }
     }
-
-
-
-    // getActiveBm(eventId: string) {
-    //     try {
-    //         return bookmakerDataArray.find(b => b.event_id == eventId);
-    //     } catch (err) {
-    //         console.error(err)
-    //     }
-    // }
-    // getActiveBMs() {
-    //     try {
-    //         return bookmakerDataArray;
-    //     } catch (err) {
-    //         console.error(err)
-    //     }
-    // }
-
-    // getActiveFancy(event_id: string) {
-    //     try {
-
-    //         return eventData.find(p => p.event_id == event_id)
-
-    //     } catch (err) {
-    //         console.error(err)
-    //     }
-    // }
 
 }

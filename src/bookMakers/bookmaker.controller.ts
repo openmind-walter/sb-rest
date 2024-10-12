@@ -1,7 +1,6 @@
 import { Controller, Get, Param } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ApiMessage, ApiResponseDto } from 'src/common/api.response';
-import { FancyService } from './fancy.service';
 import { BookMakerService } from './bookmaker.service';
 
 

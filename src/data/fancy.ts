@@ -1,4 +1,4 @@
-import { FancyEvent } from "src/fancy/model/event";
+import { FancyEvent } from "src/model/fancy";
 
 const mockfancList = [
     {
@@ -45,20 +45,57 @@ const mockfancList = [
 
 
 
-export function getMockFancies(): FancyEvent[] {
-    const result = [];
+export function getMockFancies(): Promise<FancyEvent[]> {
 
-    mockfancList.forEach((response) => {
-        const parsedData = Object.keys(response.data).map(key => JSON.parse(response.data[key]));
+    return new Promise(resolve => {
+        setTimeout(() => {
+            const result = [];
+            mockfancList.forEach((response) => {
+                const parsedData = Object.keys(response.data).map(key => JSON.parse(response.data[key]));
 
-        result.push({
-            status: response.status,
-            event_id: response.event_id,
-            data: parsedData
-        });
+                result.push({
+                    status: response.status,
+                    event_id: response.event_id,
+                    data: parsedData
+                });
+            });
+            resolve(result);
+        }, 100);
     });
 
-    return result;
 }
 
+export async function getMockFancy(eventId: string): Promise<FancyEvent | null> {
+    const fancyevent = (await getMockFancies()).find(f => f.event_id === eventId) || null;
 
+    if (fancyevent) {
+        const getRandomNumber = (max: number) => (Math.random() * max).toFixed(1);
+        const updatedData = Object.fromEntries(
+            Object.entries(fancyevent.data).map(([key, runner]) => [
+                key,
+                {
+                    ...runner,
+                    b1: Number(runner.b1) + Number(getRandomNumber(10)),
+                    bs1: Number(runner.bs1) + Number(getRandomNumber(10)),
+                    l1: Number(runner.l1) + Number(getRandomNumber(10)),
+                    ls1: Number(runner.ls1) + Number(getRandomNumber(10)),
+                    b2: Number(runner.b2) + Number(getRandomNumber(10)),
+                    bs2: Number(runner.bs2) + Number(getRandomNumber(10)),
+                    l2: Number(runner.l2) + Number(getRandomNumber(10)),
+                    ls2: Number(runner.ls2) + Number(getRandomNumber(10)),
+                    b3: Number(runner.b3) + Number(getRandomNumber(10)),
+                    bs3: Number(runner.bs3) + Number(getRandomNumber(10)),
+                    l3: Number(runner.l3) + Number(getRandomNumber(10)),
+                    ls3: Number(runner.ls3) + Number(getRandomNumber(10)),
+                },
+            ])
+        );
+
+        return {
+            ...fancyevent,
+            data: updatedData,
+        };
+    }
+
+    return fancyevent;
+}

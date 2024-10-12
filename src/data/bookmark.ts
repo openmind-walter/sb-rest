@@ -1,4 +1,4 @@
-import { Bookmaker } from "src/fancy/model/bookmaker";
+import { Bookmaker } from "src/model/bookmaker";
 
 const mockBookMakers = [
     {
