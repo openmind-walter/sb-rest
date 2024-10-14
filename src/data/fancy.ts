@@ -1,4 +1,4 @@
-import { FancyEvent } from "src/model/fancy";
+import { FancyEvent, FancyEventMarket } from "src/model/fancy";
 
 const mockfancList = [
     {
@@ -43,59 +43,59 @@ const mockfancList = [
     }
 ]
 
-
-
 export function getMockFancies(): Promise<FancyEvent[]> {
-
     return new Promise(resolve => {
         setTimeout(() => {
-            const result = [];
+            const result: FancyEvent[] = [];
             mockfancList.forEach((response) => {
-                const parsedData = Object.keys(response.data).map(key => JSON.parse(response.data[key]));
+                const parsedData: Record<string, FancyEventMarket> = Object.keys(response.data).reduce((acc, key) => {
+                    acc[key] = JSON.parse(response.data[key]);
+                    return acc;
+                }, {} as Record<string, FancyEventMarket>);
 
                 result.push({
-                    status: response.status,
                     event_id: response.event_id,
-                    data: parsedData
+                    markets: parsedData,
                 });
             });
             resolve(result);
         }, 100);
     });
-
 }
 
 export async function getMockFancy(eventId: string): Promise<FancyEvent | null> {
     const fancyevent = (await getMockFancies()).find(f => f.event_id === eventId) || null;
 
-    if (fancyevent) {
-        const getRandomNumber = (max: number) => (Math.random() * max).toFixed(1);
-        const updatedData = Object.fromEntries(
-            Object.entries(fancyevent.data).map(([key, runner]) => [
-                key,
-                {
-                    ...runner,
-                    b1: Number(runner.b1) + Number(getRandomNumber(10)),
-                    bs1: Number(runner.bs1) + Number(getRandomNumber(10)),
-                    l1: Number(runner.l1) + Number(getRandomNumber(10)),
-                    ls1: Number(runner.ls1) + Number(getRandomNumber(10)),
-                    b2: Number(runner.b2) + Number(getRandomNumber(10)),
-                    bs2: Number(runner.bs2) + Number(getRandomNumber(10)),
-                    l2: Number(runner.l2) + Number(getRandomNumber(10)),
-                    ls2: Number(runner.ls2) + Number(getRandomNumber(10)),
-                    b3: Number(runner.b3) + Number(getRandomNumber(10)),
-                    bs3: Number(runner.bs3) + Number(getRandomNumber(10)),
-                    l3: Number(runner.l3) + Number(getRandomNumber(10)),
-                    ls3: Number(runner.ls3) + Number(getRandomNumber(10)),
-                },
-            ])
-        );
-
-        return {
-            ...fancyevent,
-            data: updatedData,
-        };
+    if (!fancyevent) {
+        return null; // Return early if no event is found
     }
 
-    return fancyevent;
+    const getRandomNumber = (max: number) => (Math.random() * max).toFixed(1);
+
+    // Iterate over `markets` which is a `Record<string, FancyEventMarket>`
+    const updatedMarkets: Record<string, FancyEventMarket> = Object.fromEntries(
+        Object.entries(fancyevent.markets).map(([key, market]) => [
+            key,
+            {
+                ...market,
+                b1: market.b1 + Number(getRandomNumber(10)),
+                bs1: market.bs1 + Number(getRandomNumber(10)),
+                l1: market.l1 + Number(getRandomNumber(10)),
+                ls1: market.ls1 + Number(getRandomNumber(10)),
+                b2: market.b2 + Number(getRandomNumber(10)),
+                bs2: market.bs2 + Number(getRandomNumber(10)),
+                l2: market.l2 + Number(getRandomNumber(10)),
+                ls2: market.ls2 + Number(getRandomNumber(10)),
+                b3: market.b3 + Number(getRandomNumber(10)),
+                bs3: market.bs3 + Number(getRandomNumber(10)),
+                l3: market.l3 + Number(getRandomNumber(10)),
+                ls3: market.ls3 + Number(getRandomNumber(10)),
+            }
+        ])
+    );
+
+    return {
+        ...fancyevent,
+        markets: updatedMarkets,
+    };
 }

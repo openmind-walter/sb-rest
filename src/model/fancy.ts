@@ -1,6 +1,6 @@
 // src/models/runner.model.ts
 
-class Runner {
+export class FancyEventMarket {
     id: number;
     name: string;
     type_code: number;
@@ -34,7 +34,7 @@ class Runner {
 
 
 export class FancyEvent {
-    data: Record<string, Runner>;
+    markets: Record<string, FancyEventMarket>;
     event_id: string;
 }
 
