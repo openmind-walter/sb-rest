@@ -34,7 +34,7 @@ export class FancyEventMarket {
 
 
 export class FancyEvent {
-    markets: Record<string, FancyEventMarket>;
+    markets: Record<string, FancyEventMarket> | FancyEventMarket[];
     event_id: string;
 }
 
