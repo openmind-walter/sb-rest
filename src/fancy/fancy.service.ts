@@ -28,9 +28,9 @@ export class FancyService {
             if (fancyeventData && updateCache) {
                 this.redisMutiService.set(configuration.redis.client.clientBackEnd,
                     CachedKeys.getFacnyEvent(eventId), 3600, JSON.stringify(fancyevent));
-                return fancyevent;
+                this.marketDetailsService.createMarketDetails(fancyevent);
             }
-            this.marketDetailsService.createMarketDetails(fancyevent);
+
             return fancyevent;
         }
         catch (error) {

@@ -1,5 +1,3 @@
-
-
 export class MarketDetailsDTO {
   COMPETITION_NAME: string;
   EVENT_ID: string;

@@ -1,4 +1,5 @@
-import { MarketStatus } from "src/models";
+import { MarketStatus } from "./bfApiTypes";
+
 
 
 export class MarketDetails {
@@ -20,9 +21,9 @@ export class MarketDetails {
   groupId?: number;
   eventId?: number;
   marketId?: number;
-  market_status? :MarketStatus
-  number_of_winners?:number
-  market_type_id?:number
+  market_status?: MarketStatus
+  number_of_winners?: number
+  market_type_id?: number
 }
 
 export class MarketType {

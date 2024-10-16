@@ -1,4 +1,4 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { LoggerService } from 'src/common/logger.service';
 import { MarketBettingType, MarketCatalogue } from 'src/model/bfApiTypes';
@@ -85,14 +85,12 @@ export class MarketDetailsService {
       marketDetails.MARKET_START_TIME = new Date(marketStartTime);
       marketDetails.EVENT_NAME = marketName
       marketDetails.PARENT_EVENT_NAME = formatString(parentEventName);
-      marketDetails.COMPETITION_NAME = ''  // to  be checked ;
-      // formatString(marketCatalogue?.competition?.name) || '';
+      marketDetails.COMPETITION_NAME = formatString(await this.getEventName(eventId)) || '';
       marketDetails.RACE_NAME = '';
       marketDetails.VENUE = '';
       marketDetails.MARKET_BETTING_TYPE = getIndex(MarketBettingType, fancyMarket.odd_type) ?? 0;
       marketDetails.MARKET_TYPE_ID = market_type_id;
-      marketDetails.MARKET_STATUS = fancyMarket.odd_type
-
+      marketDetails.MARKET_STATUS = 0;
       const saveMaketDetsils = await axios.post(`${process.env.API_SERVER_URL}/v1/api/market_details`, marketDetails)
       const marketId = saveMaketDetsils?.data?.result[0]?.INSERT_MARKET_DETAILS;
       console.log('Market Deatils saved to DB', externalMarketId, eventId);
@@ -165,6 +163,7 @@ export class MarketDetailsService {
   private async createOrGetMarketType(MARKET_TYPE: string) {
     try {
       const marketType = (await axios.get(`${process.env.API_SERVER_URL}/v1/api/market_type/${MARKET_TYPE}`))?.data;
+
       if (marketType?.result?.length > 0) return (marketType?.result[0]);
       else {
         const response = (await axios.post(`${process.env.API_SERVER_URL}/v1/api/market_type`, { MARKET_TYPE }))?.data;
@@ -207,6 +206,20 @@ export class MarketDetailsService {
     }
   }
 
+  private async getEventName(id, local = 'en') {
+    try {
+      const params = local ? { local } : {};
+      const baseUrl = process.env.BF_REST_SERVER_URL;
+      const url = `${baseUrl}/0/bf/event-markets//${id}`;
+      const response = await axios.get(url, { params });
+      if (response?.data?.data?.length) return response?.data?.data[0]?.event?.name;
+      return ''
+    } catch (error) {
+      this.logger.error(`Get Event Markets: ${error}`, MarketDetails.name);
+      return null;
+    }
+  }
+
   private async getMarkets(marketIds: string[], local?) {
     try {
       const url = `${process.env.BF_REST_SERVER_URL}/bf/market_status`
@@ -216,6 +229,17 @@ export class MarketDetailsService {
     } catch (error) {
       this.logger.error(`Get  Markets : ${error}`, MarketDetails.name);
     }
+  }
+
+
+  async removeFacnyMaketDetails(eventId, marketId: string) {
+    try {
+      return await axios.post(`${process.env.API_SERVER_URL}/v1/api/market_details/byEvent/${eventId}/${marketId}`);
+
+    } catch (error) {
+      this.logger.error(`Remove fancy market details : ${error}`, MarketDetails.name);
+    }
+
   }
 
 }
