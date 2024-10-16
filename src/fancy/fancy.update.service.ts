@@ -66,12 +66,14 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
             await Promise.all(
                 batch.map(async ({ eventId, fancyEvent }) => {
                     try {
+                        const fancyStringfy = JSON.stringify(fancyEvent)
                         await this.redisMutiService.set(
                             configuration.redis.client.clientBackEnd,
                             CachedKeys.getFacnyEvent(eventId),
                             3600,
-                            JSON.stringify(fancyEvent)
+                            fancyStringfy
                         );
+                        await this.redisMutiService.publish(configuration.redis.client.clientFrontEndPub, CachedKeys.getFacnyEvent(eventId), fancyStringfy);
                     } catch (error) {
                         this.logger.error(`Error writing fancy event ${eventId} to Redis: ${error.message}`, FancyUpdateService.name);
 
@@ -80,4 +82,6 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
             );
         }
     }
+
+
 }
