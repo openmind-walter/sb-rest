@@ -1,13 +1,13 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import configuration from 'src/configuration';
-import { RedisMultiService } from 'src/redis/redis.multi.service';
-import { FancyService } from './fancy.service';
-import { CachedKeys } from 'src/utlities';
-import { LoggerService } from 'src/common/logger.service';
-import { FancyEvent, MaraketStaus } from 'src/model/fancy';
-import axios from 'axios';
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import axios from 'axios';
+import { LoggerService } from 'src/common/logger.service';
+import configuration from 'src/configuration';
+import { FancyEvent, MaraketStaus } from 'src/model/fancy';
 import { PlaceBet, SIDE } from 'src/model/placebet';
+import { RedisMultiService } from 'src/redis/redis.multi.service';
+import { CachedKeys, generateGUID } from 'src/utlities';
+import { FancyService } from './fancy.service';
 
 @Injectable()
 export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
@@ -107,8 +107,10 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
                                     (bet.SIDE === SIDE.LAY && market.result < bet.PRICE)
                                 ) {
                                     // win logic
+                                    await this.betSettlemt(bet.ID, 1, market.b1)
                                 } else {
                                     // lost logic
+                                    await this.betSettlemt(bet.ID, 0, market.b1)
                                 }
                             } else {
                                 // voided logic
@@ -122,9 +124,22 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
                 }
             }
         } catch (error) {
-            this.logger.error(`Error on check bet settlement: ${error.message}`, FancyUpdateService.name);
+            this.logger.error(`Error on fancy bet settlement: ${error.message}`, FancyUpdateService.name);
         }
     }
+
+
+    async betSettlemt(BF_PLACEBET_ID: number, RESULT: 0 | 1, BF_SIZE: number) {
+        try {
+            const BF_BET_ID = generateGUID();
+            const respose = (await axios.post(`${process.env.API_SERVER_URL}/v1/api/bf_settlement/fancy`, { BF_BET_ID, BF_PLACEBET_ID, RESULT, BF_SIZE }))?.data;
+            if (!respose?.result)
+                this.logger.error(`Error on  bet settlement: ${respose}`, FancyUpdateService.name);
+        } catch (error) {
+            this.logger.error(`Error on fancy bet settlement: ${error.message}`, FancyUpdateService.name);
+        }
+    }
+
 
 }
 
