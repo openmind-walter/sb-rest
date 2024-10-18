@@ -4,6 +4,10 @@ import { RedisMultiService } from 'src/redis/redis.multi.service';
 import { FancyService } from './fancy.service';
 import { CachedKeys } from 'src/utlities';
 import { LoggerService } from 'src/common/logger.service';
+import { FancyEvent, MaraketStaus } from 'src/model/fancy';
+import axios from 'axios';
+import { ConfigService } from '@nestjs/config';
+import { PlaceBet, SIDE } from 'src/model/placebet';
 
 @Injectable()
 export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
@@ -12,6 +16,7 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
     constructor(
         private readonly redisMutiService: RedisMultiService,
         private readonly facncyService: FancyService,
+        private configService: ConfigService,
         private logger: LoggerService
     ) { }
 
@@ -54,7 +59,7 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
             .filter(({ fancyEvent }) => fancyEvent !== null);
     }
 
-    private async batchWriteToRedis(fancyEvents: { eventId: string; fancyEvent: any }[]) {
+    private async batchWriteToRedis(fancyEvents: { eventId: string; fancyEvent: FancyEvent }[]) {
         const batchSize = 50;
         const batches = [];
 
@@ -66,6 +71,8 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
             await Promise.all(
                 batch.map(async ({ eventId, fancyEvent }) => {
                     try {
+
+                        await this.checkBetSettlement(eventId, fancyEvent);
                         const fancyStringfy = JSON.stringify(fancyEvent)
                         await this.redisMutiService.set(
                             configuration.redis.client.clientBackEnd,
@@ -74,6 +81,8 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
                             fancyStringfy
                         );
                         await this.redisMutiService.publish(configuration.redis.client.clientFrontEndPub, CachedKeys.getFacnyEvent(eventId), fancyStringfy);
+
+
                     } catch (error) {
                         this.logger.error(`Error writing fancy event ${eventId} to Redis: ${error.message}`, FancyUpdateService.name);
 
@@ -84,4 +93,57 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
     }
 
 
+    async checkBetSettlement(eventId: string, fancyEvent: FancyEvent) {
+        try {
+            if (Array.isArray(fancyEvent?.markets)) {
+                for (const market of fancyEvent.markets) {
+                    if (market.status1 === MaraketStaus.REMOVED || market.status1 === MaraketStaus.CLOSED) {
+                        const response = await axios.get(`${this.configService.get("API_SERVER_URL")}/v1/api/bf_placebet/event_market_pending/${eventId}/${market.id}`);
+                        const bets: PlaceBet[] = response?.data?.result ?? [];
+                        for (const bet of bets) {
+                            if (market.status1 === MaraketStaus.CLOSED) {
+                                if (
+                                    (bet.SIDE === SIDE.BACK && market.result >= bet.PRICE) ||
+                                    (bet.SIDE === SIDE.LAY && market.result < bet.PRICE)
+                                ) {
+                                    // win logic
+                                } else {
+                                    // lost logic
+                                }
+                            } else {
+                                // voided logic
+                            }
+                        }
+                    }
+
+                    // clean market details  not   have  place bets
+
+
+                }
+            }
+        } catch (error) {
+            this.logger.error(`Error on check bet settlement: ${error.message}`, FancyUpdateService.name);
+        }
+    }
+
 }
+
+
+// var betType = cricketFanciesTransaction.getCricketFanciesBetType();
+// var price = cricketFanciesTransaction.getPrice();
+// if (cricketFanciesResult.isVoidMarket()) {
+//   cricketFanciesTransaction.setCricketFancyBetStatus(CricketFancyBetStatus.VOID);
+// } else if ((betType.isYes() && cricketFanciesResult.getPriceResult() >= price)
+//     || (betType.isNo() && cricketFanciesResult.getPriceResult() < price)) {
+//   cricketFanciesTransaction.setCricketFancyBetStatus(CricketFancyBetStatus.WON);
+// } else {
+//   cricketFanciesTransaction.setCricketFancyBetStatus(CricketFancyBetStatus.LOST);
+// }
+// cricketFanciesTransaction.setSettledDate(new Date());
+// var account =
+//     accountRepository.getAccountById(cricketFanciesTransaction.getAccountId(), true);
+// var placedTransaction = cricketFanciesTransaction.getAccountTransaction();
+// if (placedTransaction == null) {
+//   throw new WinLossCalculationException(
+//       "Can't find the placed transaction for " + cricketFanciesTransaction);
+// }

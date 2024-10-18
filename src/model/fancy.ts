@@ -1,5 +1,3 @@
-// src/models/runner.model.ts
-
 export class FancyEventMarket {
     id: number;
     name: string;
@@ -23,13 +21,21 @@ export class FancyEventMarket {
     bs3: number;
     l3: number;
     ls3: number;
-    status1: string;
-    status2: string;
-    status3: string;
-    result: any;
+    status1: MaraketStaus;
+    status2: MaraketStaus;
+    status3: MaraketStaus;
+    result: number | null;
     is_active: number;
     in_play: number;
     auto_suspend_time: string;
+}
+
+export enum MaraketStaus {
+    ACTIVE = "ACTIVE",
+    BALL_RUNNING = "BALL_RUNNING",
+    CLOSED = "CLOSED",
+    SUSPENDED = "SUSPENDED",
+    REMOVED = "REMOVED"
 }
 
 
