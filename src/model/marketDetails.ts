@@ -1,4 +1,5 @@
-import { MarketStatus } from "./bfApiTypes";
+import { MarketStatus } from "./marketStatus";
+
 
 
 

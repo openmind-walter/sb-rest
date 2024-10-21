@@ -100,6 +100,7 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
                     if (market.status1 === MaraketStaus.REMOVED || market.status1 === MaraketStaus.CLOSED) {
                         const response = await axios.get(`${this.configService.get("API_SERVER_URL")}/v1/api/bf_placebet/event_market_pending/${eventId}/${market.id}`);
                         const bets: PlaceBet[] = response?.data?.result ?? [];
+
                         for (const bet of bets) {
                             if (market.status1 === MaraketStaus.CLOSED) {
                                 if (
@@ -107,13 +108,16 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
                                     (bet.SIDE === SIDE.LAY && market.result < bet.PRICE)
                                 ) {
                                     // win logic
-                                    await this.betSettlemt(bet.ID, 1, market.b1)
+                                    await this.betSettlement(bet.ID, 1, bet.SIZE)
                                 } else {
                                     // lost logic
-                                    await this.betSettlemt(bet.ID, 0, market.b1)
+                                    await this.betSettlement(bet.ID, 0, bet.SIZE)
                                 }
                             } else {
+
                                 // voided logic
+
+
                             }
                         }
                     }
@@ -124,12 +128,13 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
                 }
             }
         } catch (error) {
-            this.logger.error(`Error on fancy bet settlement: ${error.message}`, FancyUpdateService.name);
+            console.log(error);
+            this.logger.error(`Error on  check fancy bet settlement: ${error.message}`, FancyUpdateService.name);
         }
     }
 
 
-    async betSettlemt(BF_PLACEBET_ID: number, RESULT: 0 | 1, BF_SIZE: number) {
+    async betSettlement(BF_PLACEBET_ID: number, RESULT: 0 | 1, BF_SIZE: number) {
         try {
             const BF_BET_ID = generateGUID();
             const respose = (await axios.post(`${process.env.API_SERVER_URL}/v1/api/bf_settlement/fancy`, { BF_BET_ID, BF_PLACEBET_ID, RESULT, BF_SIZE }))?.data;

@@ -5,11 +5,12 @@ import { getMockFancies, getMockFancy } from 'src/data/fancy';
 import { RedisMultiService } from 'src/redis/redis.multi.service';
 import { CachedKeys } from 'src/utlities';
 import { MarketDetailsService } from './fancy.market.service';
+import { FancyMockService } from './fancyMock.service';
 
 
 @Injectable()
 export class FancyService {
-    constructor(private redisMutiService: RedisMultiService, private marketDetailsService: MarketDetailsService, private logger: LoggerService) { }
+    constructor(private redisMutiService: RedisMultiService, private marketDetailsService: MarketDetailsService, private logger: LoggerService, private fancyMockSerivice: FancyMockService) { }
     async getFanciesEvents() {
         try {
             return await getMockFancies();
@@ -21,7 +22,8 @@ export class FancyService {
     }
     async getFancyEvent(eventId: string, updateCache = true) {
         try {
-            let fancyeventData = await getMockFancy(eventId);
+            let fancyeventData = this.fancyMockSerivice.getMarketByEventId(eventId);
+            //  await getMockFancy(eventId);
             let fancyevent;
             if (fancyeventData)
                 fancyevent = { ...fancyeventData, markets: Object.values(fancyeventData.markets) };

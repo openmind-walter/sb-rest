@@ -210,7 +210,7 @@ export class MarketDetailsService {
     try {
       const params = local ? { local } : {};
       const baseUrl = process.env.BF_REST_SERVER_URL;
-      const url = `${baseUrl}/0/bf/event-markets//${id}`;
+      const url = `${baseUrl}/bf/event-markets/${id}`;
       const response = await axios.get(url, { params });
       if (response?.data?.data?.length) return response?.data?.data[0]?.event?.name;
       return ''
