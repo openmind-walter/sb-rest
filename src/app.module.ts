@@ -1,4 +1,4 @@
-import { FanancyController } from './fancy/fanancy.controller';
+
 import { FancyModule } from './fancy/fancy.module';
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
