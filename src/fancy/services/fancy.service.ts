@@ -86,10 +86,8 @@ export class FancyService {
             const isAdminUpdated = existingMarket[`isAdminUpdated_${field}`];
 
             if (isAdminUpdated) {
-                // Always use admin's value if it has been updated by an admin, regardless of recency
                 updatesToApply[field] = existingMarket[field];
             } else {
-                // Use provider's data if no admin update exists for this field
                 updatesToApply[field] = providerData[field];
             }
         }
