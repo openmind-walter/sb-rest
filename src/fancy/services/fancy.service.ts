@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { LoggerService } from 'src/common/logger.service';
 import configuration from 'src/configuration';
-import { getMockFancies, getMockFancy } from 'src/data/fancy';
+import { getMockFancies } from 'src/data/fancy';
+import { FancyEventMarket } from 'src/model/fancy';
 import { RedisMultiService } from 'src/redis/redis.multi.service';
 import { CachedKeys } from 'src/utlities';
 import { MarketDetailsService } from './fancy.market.service';
 import { FancyMockService } from './fancyMock.service';
-import { FancyEventMarket } from 'src/model/fancy';
 
 
 @Injectable()
@@ -23,12 +23,10 @@ export class FancyService {
     }
     async getFancyEvent(eventId: string, updateCache = true) {
         try {
-            let fancyeventData = this.fancyMockSerivice.getMarketByEventId(eventId);
-            //  await getMockFancy(eventId);
-            let fancyevent;
-            if (fancyeventData)
-                fancyevent = { ...fancyeventData, markets: Object.values(fancyeventData.markets) };
-            if (fancyeventData && updateCache) {
+            const fancyData = await this.getExitFancyMarket(eventId)
+            if (fancyData) return JSON.parse(fancyData);
+            const fancyevent = await this.getFancyAPiEvent(eventId);
+            if (fancyevent) {
                 this.redisMutiService.set(configuration.redis.client.clientBackEnd,
                     CachedKeys.getFacnyEvent(eventId), 3600, JSON.stringify(fancyevent));
                 this.marketDetailsService.createMarketDetails(fancyevent);
@@ -41,6 +39,34 @@ export class FancyService {
 
         }
     }
+
+
+
+    async getFancyAPiEvent(eventId: string) {
+        try {
+            let fancyeventData = this.fancyMockSerivice.getMarketByEventId(eventId);
+            if (fancyeventData)
+                return { ...fancyeventData, markets: Object.values(fancyeventData.markets) };
+        }
+        catch (error) {
+            this.logger.error(`Get fancy event: ${error.message}`, FancyService.name);
+
+        }
+    }
+
+    async getExitFancyMarket(eventId: string) {
+        try {
+            const oldfancyData = await this.redisMutiService.get(configuration.redis.client.clientBackEnd,
+                CachedKeys.getFacnyEvent(eventId));
+            if (oldfancyData)
+                return JSON.parse(oldfancyData);
+        }
+        catch (err) {
+            this.logger.error(`Get  exist fancy event: ${err.message}`, FancyService.name);
+
+        }
+    }
+
 
 
 
@@ -74,7 +100,7 @@ export class FancyService {
     }
 
     // Conflict resolution logic giving absolute priority to admin updates
-    private resolveMarketConflict(existingMarket: FancyEventMarket, providerData: FancyEventMarket): FancyEventMarket {
+    resolveMarketConflict(existingMarket: FancyEventMarket, providerData: FancyEventMarket): FancyEventMarket {
         const conflictFields = [
             'statusName', 'minBetSize', 'maxBetSize', 'delayBetting',
             'priority', 'rebateRatio', 'runsNo', 'runsYes', 'oddsNo', 'oddsYes'
