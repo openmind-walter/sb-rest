@@ -48,21 +48,34 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
 
         }
     }
-
     private async fetchFancyEvents(activeFancies: string[]) {
         const fancyEvents = await Promise.all(
             activeFancies.map(async (eventId) => {
-                const fancyApiEvent = await this.facncyService.getFancyAPiEvent(eventId);
-                if (fancyApiEvent) return;
-                const oldfancyData = await this.redisMutiService.get(configuration.redis.client.clientBackEnd,
-                    CachedKeys.getFacnyEvent(eventId));
+                // Fetch the event data from the API
                 const oldfancy = await this.facncyService.getExitFancyMarket(eventId);
+                const fancyApiEvent = await this.facncyService.getFancyAPiEvent(eventId);
+
+                if (!fancyApiEvent) return null;
+                if (oldfancy) {
+                    return this.facncyService.resolveEventMarketConflicts(oldfancy, fancyApiEvent);
+                    // console.log(resolvedData)
+                }
+
+                // Return null if no data from API
+
+
+                return fancyApiEvent;
+                // If there is no old fancy market data, return the API event data
                 if (!oldfancy) return fancyApiEvent;
-            const d= this.facncyService.resolveEventMarketConflicts(oldfancy, fancyApiEvent)
-            console.log('==update=====>',d)
-            return d;
+
+                // Resolve conflicts if both oldfancy and fancyApiEvent exist
+                const resolvedData = this.facncyService.resolveEventMarketConflicts(oldfancy, fancyApiEvent);
+                // console.log('==update=====>', resolvedData);
+                return resolvedData;
             })
         );
+
+        // Filter out any null entries to return only valid fancy events
         return activeFancies
             .map((eventId, index) => ({ eventId, fancyEvent: fancyEvents[index] }))
             .filter(({ fancyEvent }) => fancyEvent !== null);
@@ -81,7 +94,7 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
                 batch.map(async ({ eventId, fancyEvent }) => {
                     try {
 
-                        await this.checkBetSettlement(eventId, fancyEvent);
+                        // await this.checkBetSettlement(eventId, fancyEvent);
                         const fancyStringfy = JSON.stringify(fancyEvent)
                         await this.redisMutiService.set(
                             configuration.redis.client.clientBackEnd,
