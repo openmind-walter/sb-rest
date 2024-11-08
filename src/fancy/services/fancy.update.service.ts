@@ -52,18 +52,17 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
     private async fetchFancyEvents(activeFancies: string[]) {
         const fancyEvents = await Promise.all(
             activeFancies.map(async (eventId) => {
-                const fancyApiEvent = await this.facncyService.getFancyAPiEvent(eventId)
-                //
-                if (fancyApiEvent) return
+                const fancyApiEvent = await this.facncyService.getFancyAPiEvent(eventId);
+                if (fancyApiEvent) return;
                 const oldfancyData = await this.redisMutiService.get(configuration.redis.client.clientBackEnd,
                     CachedKeys.getFacnyEvent(eventId));
                 const oldfancy = await this.facncyService.getExitFancyMarket(eventId);
                 if (!oldfancy) return fancyApiEvent;
-
-                // this.facncyService.resolveMarketConflict(oldfancy, fancyApiEvent)
+            const d= this.facncyService.resolveEventMarketConflicts(oldfancy, fancyApiEvent)
+            console.log('==update=====>',d)
+            return d;
             })
         );
-
         return activeFancies
             .map((eventId, index) => ({ eventId, fancyEvent: fancyEvents[index] }))
             .filter(({ fancyEvent }) => fancyEvent !== null);
