@@ -60,18 +60,8 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
                     return this.facncyService.resolveEventMarketConflicts(oldfancy, fancyApiEvent);
                     // console.log(resolvedData)
                 }
-
                 // Return null if no data from API
-
-
                 return fancyApiEvent;
-                // If there is no old fancy market data, return the API event data
-                if (!oldfancy) return fancyApiEvent;
-
-                // Resolve conflicts if both oldfancy and fancyApiEvent exist
-                const resolvedData = this.facncyService.resolveEventMarketConflicts(oldfancy, fancyApiEvent);
-                // console.log('==update=====>', resolvedData);
-                return resolvedData;
             })
         );
 
