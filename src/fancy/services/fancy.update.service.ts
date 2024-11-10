@@ -48,12 +48,24 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
 
         }
     }
-
     private async fetchFancyEvents(activeFancies: string[]) {
         const fancyEvents = await Promise.all(
-            activeFancies.map(eventId => this.facncyService.getFancyEvent(eventId, false))
+            activeFancies.map(async (eventId) => {
+                // Fetch the event data from the API
+                const oldfancy = await this.facncyService.getExitFancyMarket(eventId);
+                const fancyApiEvent = await this.facncyService.getFancyAPiEvent(eventId);
+
+                if (!fancyApiEvent) return null;
+                if (oldfancy) {
+                    return this.facncyService.resolveEventMarketConflicts(oldfancy, fancyApiEvent);
+                    // console.log(resolvedData)
+                }
+                // Return null if no data from API
+                return fancyApiEvent;
+            })
         );
 
+        // Filter out any null entries to return only valid fancy events
         return activeFancies
             .map((eventId, index) => ({ eventId, fancyEvent: fancyEvents[index] }))
             .filter(({ fancyEvent }) => fancyEvent !== null);
@@ -72,7 +84,7 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
                 batch.map(async ({ eventId, fancyEvent }) => {
                     try {
 
-                        await this.checkBetSettlement(eventId, fancyEvent);
+                        // await this.checkBetSettlement(eventId, fancyEvent);
                         const fancyStringfy = JSON.stringify(fancyEvent)
                         await this.redisMutiService.set(
                             configuration.redis.client.clientBackEnd,
@@ -147,6 +159,8 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
 
 
 }
+
+
 
 
 // var betType = cricketFanciesTransaction.getCricketFanciesBetType();

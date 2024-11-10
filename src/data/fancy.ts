@@ -69,6 +69,11 @@ export function getMockFancies(): Promise<FancyEvent[]> {
     });
 }
 
+export async function getFeacyMockEvetIds() {
+    const events = await getMockFancies();
+    return events.map(e => e.event_id);
+}
+
 export async function getMockFancy(eventId: string): Promise<FancyEvent | null> {
     const fancyevent = (await getMockFancies()).find(f => f.event_id === eventId) || null;
 

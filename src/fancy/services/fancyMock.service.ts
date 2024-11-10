@@ -66,7 +66,7 @@ export class FancyMockService {
             market.b1 = this.getRandomInt(5, 300);
             market.l1 = this.getRandomInt(5, 300);
 
-            this.logger.log(`Market ${market.name} updated: odds=${market.b1}/${market.l1}`);
+            // this.logger.log(`Market ${market.name} updated: odds=${market.b1}/${market.l1}`);
         }
     }
 
@@ -96,19 +96,19 @@ export class FancyMockService {
         market.status1 = MaraketStaus.CLOSED;
         market.result = Math.floor(Math.random() * 100);  // Assign a random result number
         market.is_active = 0;  // Set is_active to 0
-        this.logger.log(`Market ${market.name} closed with result ${market.result}`);
+        // this.logger.log(`Market ${market.name} closed with result ${market.result}`);
     }
 
     private reopenMarket(market: FancyEventMarket) {
         market.status1 = MaraketStaus.ACTIVE;
         market.is_active = 1;  // Set is_active back to 1
         market.result = null;  // Clear the result when reopened
-        this.logger.log(`Market ${market.name} reopened`);
+        // this.logger.log(`Market ${market.name} reopened`);
     }
 
     private suspendMarket(market: FancyEventMarket) {
         market.status1 = MaraketStaus.SUSPENDED;
-        this.logger.log(`Market ${market.name} suspended`);
+        // this.logger.log(`Market ${market.name} suspended`);
     }
 
     private setBallRunningStatus(market: FancyEventMarket) {
