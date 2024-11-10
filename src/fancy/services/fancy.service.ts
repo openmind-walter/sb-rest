@@ -110,7 +110,7 @@ export class FancyService {
             if (fancyevent) {
                 const done = await this.updateFancyCache(eventId, JSON.stringify(fancyevent));
                 // this.marketDetailsService.createMarketDetails(fancyevent);
-                return Array.isArray(fancyevent.markets) && fancyevent.markets
+                return Array.isArray(fancyevent?.markets) && fancyevent?.markets
                     .map(market => FancyMarketUpdateDto.fromFancyEventMarket(market));
             }
 
