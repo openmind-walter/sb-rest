@@ -54,13 +54,12 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
                 // Fetch the event data from the API
                 const oldfancy = await this.facncyService.getExitFancyMarket(eventId);
                 const fancyApiEvent = await this.facncyService.getFancyAPiEvent(eventId);
-
-                if (!fancyApiEvent) return null;
+                // return fancyApiEvent;
+                if (!fancyApiEvent) return oldfancy;
                 if (oldfancy) {
                     return this.facncyService.resolveEventMarketConflicts(oldfancy, fancyApiEvent);
-                    // console.log(resolvedData)
                 }
-                // Return null if no data from API
+
                 return fancyApiEvent;
             })
         );
@@ -72,8 +71,10 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
     }
 
     private async batchWriteToRedis(fancyEvents: { eventId: string; fancyEvent: FancyEvent }[]) {
-        const batchSize = 50;
+        const batchSize = 100;
         const batches = [];
+
+
 
         for (let i = 0; i < fancyEvents.length; i += batchSize) {
             batches.push(fancyEvents.slice(i, i + batchSize));
