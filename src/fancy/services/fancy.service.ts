@@ -86,7 +86,7 @@ export class FancyService {
             if (fancyData) return fancyData;
             const fancyevent = await this.getFancyAPiEvent(eventId);
             if (fancyevent) {
-                const done = await this.updateFancyCache(eventId, JSON.stringify(fancyevent));
+                const done = await this.updateFancyCache(eventId, fancyevent);
                 // this.marketDetailsService.createMarketDetails(fancyevent);
             }
 
@@ -108,7 +108,7 @@ export class FancyService {
             };
             const fancyevent = await this.getFancyAPiEvent(eventId);
             if (fancyevent) {
-                const done = await this.updateFancyCache(eventId, JSON.stringify(fancyevent));
+                const done = await this.updateFancyCache(eventId, fancyevent);
                 // this.marketDetailsService.createMarketDetails(fancyevent);
                 return Array.isArray(fancyevent?.markets) && fancyevent?.markets
                     .map(market => FancyMarketUpdateDto.fromFancyEventMarket(market));
@@ -221,7 +221,7 @@ export class FancyService {
             return await this.redisMutiService.set(
                 configuration.redis.client.clientBackEnd,
                 CachedKeys.getFacnyEvent(eventId),
-                36000,
+                3600,
                 JSON.stringify(fancyevent)
             );
         }

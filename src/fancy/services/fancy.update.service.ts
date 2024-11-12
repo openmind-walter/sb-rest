@@ -56,7 +56,6 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
                 const oldfancy = await this.facncyService.getExitFancyMarket(eventId);
                 const fancyApiEvent = await this.facncyService.getFancyAPiEvent(eventId);
                 //to  be replace later
-                 return fancyApiEvent;
                 // return fancyApiEvent;
                 if (!fancyApiEvent) return oldfancy;
                 if (oldfancy) {

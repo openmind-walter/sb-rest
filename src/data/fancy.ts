@@ -23,7 +23,7 @@ const mockfancList = [
             "11656": "{\"id\":11656,\"name\":\"Match 2nd Six\",\"type_code\":34,\"odd_type\":\"RUNS\",\"priority\":1,\"bet_allow\":1,\"bet_delay\":0,\"min_bet\":100,\"max_bet\":100000,\"max_profit\":500000,\"b1\":\"12.00\",\"bs1\":\"100\",\"l1\":\"10.00\",\"ls1\":\"100\",\"b2\":\"0.00\",\"bs2\":\"0\",\"l2\":\"0.00\",\"ls2\":\"0\",\"b3\":\"0.00\",\"bs3\":\"0\",\"l3\":\"0.00\",\"ls3\":\"0\",\"status1\":\"ACTIVE\",\"status2\":\"ACTIVE\",\"status3\":\"ACTIVE\",\"result\":null,\"is_active\":1,\"in_play\":1,\"auto_suspend_time\":\"2021-09-01 09:20:00\"}",
             "11657": "{\"id\":11657,\"name\":\"Match 3rd Six\",\"type_code\":34,\"odd_type\":\"RUNS\",\"priority\":1,\"bet_allow\":1,\"bet_delay\":0,\"min_bet\":100,\"max_bet\":100000,\"max_profit\":500000,\"b1\":\"15.00\",\"bs1\":\"100\",\"l1\":\"13.00\",\"ls1\":\"100\",\"b2\":\"0.00\",\"bs2\":\"0\",\"l2\":\"0.00\",\"ls2\":\"0\",\"b3\":\"0.00\",\"bs3\":\"0\",\"l3\":\"0.00\",\"ls3\":\"0\",\"status1\":\"ACTIVE\",\"status2\":\"ACTIVE\",\"status3\":\"ACTIVE\",\"result\":null,\"is_active\":1,\"in_play\":1,\"auto_suspend_time\":\"2021-09-01 09:20:00\"}"
         },
-        "event_id": "30816334"
+        "event_id": "308163388"
     },
     {
         "status": 200,
