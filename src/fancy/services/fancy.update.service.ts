@@ -8,6 +8,7 @@ import { PlaceBet, SIDE } from 'src/model/placebet';
 import { RedisMultiService } from 'src/redis/redis.multi.service';
 import { CachedKeys, generateGUID } from 'src/utlities';
 import { FancyService } from './fancy.service';
+import { FancyMarketUpdateDto } from '../dto/fancy.market.update.dto ';
 
 @Injectable()
 export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
@@ -54,6 +55,8 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
                 // Fetch the event data from the API
                 const oldfancy = await this.facncyService.getExitFancyMarket(eventId);
                 const fancyApiEvent = await this.facncyService.getFancyAPiEvent(eventId);
+                //to  be replace later
+                 return fancyApiEvent;
                 // return fancyApiEvent;
                 if (!fancyApiEvent) return oldfancy;
                 if (oldfancy) {
@@ -77,7 +80,7 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
 
 
         for (let i = 0; i < fancyEvents.length; i += batchSize) {
-            batches.push(fancyEvents.slice(i, i + batchSize));
+            batches.push(fancyEvents);
         }
 
         for (const batch of batches) {
@@ -93,11 +96,15 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
                             3600,
                             fancyStringfy
                         );
-                        await this.redisMutiService.publish(configuration.redis.client.clientFrontEndPub, CachedKeys.getFacnyEvent(eventId), fancyStringfy);
 
+                        await Promise.all(fancyEvent?.markets?.map(fancyEventMarket =>
+                            this.redisMutiService.publish(configuration.redis.client.clientFrontEndPub,
+                                fancyEventMarket.id, JSON.stringify(FancyMarketUpdateDto.fromFancyEventMarket(fancyEventMarket)))))
+
+                        //  fancyEvent: { event_id: '30816332', markets: [Array] }
 
                     } catch (error) {
-                        this.logger.error(`Error writing fancy event ${eventId} to Redis: ${error.message}`, FancyUpdateService.name);
+                        this.logger.error(`Error writing fancy event  to Redis: ${error.message}`, FancyUpdateService.name);
 
                     }
                 })
