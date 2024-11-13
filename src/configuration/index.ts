@@ -1,6 +1,6 @@
 export default {
   fancy: {
-    topic: "fancy_0_",
+    topic: "sb_fancy01_",
     eventTtl: 3600,
   },
   redis: {

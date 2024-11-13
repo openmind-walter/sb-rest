@@ -98,7 +98,7 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
 
                         await Promise.all(fancyEvent?.markets?.map(fancyEventMarket =>
                             this.redisMutiService.publish(configuration.redis.client.clientFrontEndPub,
-                                fancyEventMarket.id, JSON.stringify(FancyMarketUpdateDto.fromFancyEventMarket(fancyEventMarket)))))
+                                `sb_${fancyEvent.eventId}_${fancyEventMarket}`, JSON.stringify(FancyMarketUpdateDto.fromFancyEventMarket(fancyEventMarket)))))
 
                         //  fancyEvent: { event_id: '30816332', markets: [Array] }
 
