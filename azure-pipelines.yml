@@ -7,6 +7,8 @@ trigger:
       - "dev"
       - "uat"
       - "prod"
+    exclude:
+      - "main"
 pr:
   branches:
     exclude:
