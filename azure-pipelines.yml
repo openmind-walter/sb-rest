@@ -18,7 +18,6 @@ pool:
 steps:
   - checkout: self
   - script: |
-      cd bf-rest
       SHORT_COMMIT=$(git rev-parse --short HEAD)
       echo "##vso[task.setvariable variable=SHORT_COMMIT]$SHORT_COMMIT"
       repo_name=$(echo $(Build.Repository.Name) | cut -d'/' -f2)
