@@ -1,26 +1,16 @@
 import { BadRequestException, Body, Controller, Get, HttpException, HttpStatus, Param, Put, ValidationPipe } from '@nestjs/common';
 import { ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
 import { ApiMessage, ApiResponseDto } from 'src/common/api.response';
-import { FancyService } from './services/fancy.service';
-import { FancyMarketUpdateDto } from './dto/fancy.market.update.dto ';
+import { FancyService } from '../services/fancy.service';
+import { FancyMarketUpdateDto } from '../dto/fancy.market.update.dto ';
 
 
-@ApiTags('Fancy')
-@Controller('fancy')
+@ApiTags('SB Fancy')
+@Controller('sb/fancy')
 export class FanancyController {
 
     constructor(private fancyService: FancyService) { }
 
-    @Get('/events')
-    async getFancies() {
-        try {
-            const data = await this.fancyService.getFanciesEvents();
-
-            return new ApiResponseDto(ApiMessage.SUCCESS, data ?? []);
-        } catch (err) {
-            return new ApiResponseDto(ApiMessage.ERROR, 'Something went wrong')
-        }
-    }
 
     @Get('mock-ui/:event_id')
     async getFancy(@Param('event_id') event_id: string) {

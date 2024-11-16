@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { getMockFancies } from "src/data/fancy";
 import { FancyEvent, FancyEventMarket, MaraketStaus } from "src/model/fancy";
+import { getRandomInt } from "src/utlities";
 
 @Injectable()
 export class FancyMockService {
@@ -63,8 +64,8 @@ export class FancyMockService {
         // Check if market is active or BALL_RUNNING before changing values
         if (market.status1 === MaraketStaus.ACTIVE || market.status1 === MaraketStaus.BALL_RUNNING) {
             // Randomly update the values to whole numbers between 5 and 300
-            market.b1 = this.getRandomInt(5, 300);
-            market.l1 = this.getRandomInt(5, 300);
+            market.b1 = getRandomInt(5, 300);
+            market.l1 = getRandomInt(5, 300);
 
             // this.logger.log(`Market ${market.name} updated: odds=${market.b1}/${market.l1}`);
         }
@@ -121,10 +122,6 @@ export class FancyMockService {
         this.logger.log(`Market ${market.name} removed`);
     }
 
-    // Helper function to generate random integers between min and max (inclusive)
-    private getRandomInt(min: number, max: number): number {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
 
     // Helper function to randomly select a market status
     private getRandomStatus(): MaraketStaus {

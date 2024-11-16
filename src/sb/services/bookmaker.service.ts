@@ -6,9 +6,7 @@ import { getMockBookMakers } from 'src/data/bookmark';
 @Injectable()
 export class BookMakerService {
 
-    getBookMakers() {
-        return getMockBookMakers();
-    }
+ 
 
     getBookMaker(bookMakerId: string) {
         return getMockBookMakers().find(b => b.bookmaker_id == bookMakerId) || null;
