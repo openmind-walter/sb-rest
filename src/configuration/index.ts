@@ -1,6 +1,10 @@
 export default {
   fancy: {
-    topic: "sb_fancy01_",
+    topic: "sb_fancy_",
+    eventTtl: 3600,
+  },
+  bookMaker: {
+    topic: "sb_bookmakerd_",
     eventTtl: 3600,
   },
   redis: {

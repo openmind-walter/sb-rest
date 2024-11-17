@@ -5,7 +5,7 @@ import { LoggerService } from 'src/common/logger.service';
 import { LoginRequest, LoginResponse } from 'src/model';
 
 @Injectable()
-export class FancyAuthService {
+export class SbAuthService {
     constructor(
         private readonly configService: ConfigService,
         private logger: LoggerService
@@ -27,7 +27,7 @@ export class FancyAuthService {
             if (loginResponse?.errorDetails) {
                 this.logger.error(
                     `Login failed for request: ${JSON.stringify(loginRequest)} ${loginResponse?.errorDetails} `,
-                    FancyAuthService.name,
+                    SbAuthService.name,
                 );
                 return null;
             }
@@ -35,7 +35,7 @@ export class FancyAuthService {
         } catch (error) {
             this.logger.error(
                 `Login failed for request: ${JSON.stringify(loginRequest)}, ${error.stack}`,
-                FancyAuthService.name,
+                SbAuthService.name,
             );
             return null;
         }
