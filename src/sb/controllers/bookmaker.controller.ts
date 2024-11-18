@@ -13,9 +13,9 @@ export class BookMakerController {
 
 
     @Get('event/:event_id')
-    getBookMakerEvent(@Param('event_id') event_id: string) {
+    async getBookMakerEvent(@Param('event_id') event_id: string) {
         try {
-            const data = this.bookMakerService.getBookMakerEvent(event_id);
+            const data = await this.bookMakerService.getBookMakerEvent(event_id);
             return new ApiResponseDto(ApiMessage.SUCCESS, data ?? []);
         } catch (err) {
             console.error(err)

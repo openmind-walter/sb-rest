@@ -98,20 +98,6 @@ const mockBookMakers = [
 
 export function getMockBookMakers(): BookmakerData[] {
     return mockBookMakers.map(bm => parseBookmakerResponse(bm)).flat();
-
-    // mockBookMakers
-    // .forEach((response) => {
-    //     const parsedRunners = JSON.parse(response.data.runners);
-
-    //     result.push({
-    //         status: response.status,
-    //         bookmaker_id: response.bookmaker_id,
-    //         data: {
-    //             ...response.data,
-    //             runners: parsedRunners
-    //         }
-    //     });
-    // });
 }
 
 function parseBookmakerResponse(response: { status: number; data: any[] }): BookmakerData[] | null {
@@ -119,10 +105,7 @@ function parseBookmakerResponse(response: { status: number; data: any[] }): Book
         console.error("Invalid response status:", response.status);
         return null;
     }
-
     const data = response.data;
-    console.log(data)
-
     return data.map((item) => {
         const { bookmaker_id, data } = item;
 

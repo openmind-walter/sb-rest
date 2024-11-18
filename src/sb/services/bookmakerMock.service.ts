@@ -94,4 +94,8 @@ export class BookmakerMockService implements OnModuleInit, OnModuleDestroy {
     getBookmakerData(): BookmakerData[] {
         return this.bookmakerData;
     }
+
+    getEvent(eventId: string): BookmakerData | null {
+        return this.bookmakerData.find(event => event.event_id === eventId) || null;
+    }
 }

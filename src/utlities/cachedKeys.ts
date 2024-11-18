@@ -10,7 +10,9 @@ export class CachedKeys {
   }
 
 
-
+  static getBookMakerEvent(event_id: string) {
+    return configuration.bookMaker.topic + event_id;
+  }
 
 }
 
