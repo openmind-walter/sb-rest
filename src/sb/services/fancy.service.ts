@@ -99,7 +99,7 @@ export class FancyService {
     }
 
 
-    async getFancyEventMarkets(eventId: string) {
+    async getFancyEvent(eventId: string) {
         try {
             const fancyData = await this.getExitFancyMarket(eventId);
             if (fancyData) {
@@ -120,6 +120,33 @@ export class FancyService {
             this.logger.error(`Get fancy event: ${error.message}`, FancyService.name);
 
         }
+    }
+
+    async getFancyEventMarkets(eventId, marketId) {
+        try {
+            const fancyData = await this.getExitFancyMarket(eventId);
+            if (fancyData) {
+                return this.findMarketById(fancyData.markets, marketId);
+            };
+            const fancyevent = await this.getFancyAPiEvent(eventId);
+            if (fancyevent) {
+                const done = await this.updateFancyCache(eventId, fancyevent);
+                // this.marketDetailsService.createMarketDetails(fancyevent);
+                return this.findMarketById(fancyevent.markets, marketId);
+            }
+            return null;
+        } catch (error) {
+            this.logger.error(`Get fancy event market : ${error.message}`, FancyService.name);
+        }
+
+    }
+
+    private findMarketById(markets, marketId) {
+        if (Array.isArray(markets)) {
+            const market = markets.find((p) => p.id == marketId);
+            return market ? FancyMarketUpdateDto.fromFancyEventMarket(market) : null;
+        }
+        return null;
     }
 
 
