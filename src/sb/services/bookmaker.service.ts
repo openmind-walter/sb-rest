@@ -1,29 +1,41 @@
 
-
 import { Injectable } from '@nestjs/common';
-import { BookmakerMockService } from './bookmakerMock.service';
 import { RedisMultiService } from 'src/redis/redis.multi.service';
 import configuration from 'src/configuration';
-import { CachedKeys } from 'src/utlities';
+import { CachedKeys, parseBookmakerResponse } from 'src/utlities';
 import { LoggerService } from 'src/common/logger.service';
 import { BookmakerData } from 'src/model/bookmaker';
+import { ConfigService } from '@nestjs/config';
+import axios, { AxiosInstance } from 'axios';
+import * as http from 'http';
 
 @Injectable()
 export class BookMakerService {
-
-    constructor(private readonly bookMakerMockService: BookmakerMockService,
+    private sb_market_base_url = "SB_MARKET_BASE_URL"
+    private axiosInstance: AxiosInstance;
+    constructor(
         private logger: LoggerService,
-        private readonly redisMutiService: RedisMultiService) { }
+        private readonly redisMutiService: RedisMultiService, private configService: ConfigService) {
+        this.axiosInstance = axios.create({
+            httpAgent: new http.Agent({
+                keepAlive: true,
+                maxSockets: 100,
+                maxFreeSockets: 50,
+                timeout: 5000,
+            }),
+        });
+    }
+
+
 
 
     async getBookMakerEvent(eventId: string) {
         try {
             const bookMakerData = await this.getExitBookMakerMarket(eventId);
             if (bookMakerData) return bookMakerData;
-
             const bookMakerEvent = await this.getBookMakerAPiEvent(eventId);
             if (bookMakerEvent) {
-                const done = await this.updateFancyCache(eventId, bookMakerEvent);
+                const done = await this.updateBookMakerCache(eventId, bookMakerEvent);
                 // this.marketDetailsService.createMarketDetails(fancyevent);
                 return bookMakerEvent;
             }
@@ -41,12 +53,15 @@ export class BookMakerService {
 
     async getBookMakerAPiEvent(eventId: string) {
         try {
-            let bookMakerEventData = this.bookMakerMockService.getEvent(eventId)
+            const url = `${this.configService.get(this.sb_market_base_url)}/api/active-bm/${eventId}`
+            const response = await this.axiosInstance.get(url);
+            if (!response.data?.data) return null;
+            let bookMakerEventData = parseBookmakerResponse(response.data)
             if (bookMakerEventData)
                 return bookMakerEventData
         }
         catch (error) {
-            this.logger.error(`Get book maker even from provider: ${error.message}`, BookMakerService.name);
+            this.logger.error(`Get book maker  from provider: ${error.message}`, BookMakerService.name);
         }
     }
 
@@ -68,7 +83,7 @@ export class BookMakerService {
     }
 
 
-    async updateFancyCache(eventId, bookMakerevent) {
+    async updateBookMakerCache(eventId, bookMakerevent) {
         try {
             return await this.redisMutiService.set(
                 configuration.redis.client.clientBackEnd,

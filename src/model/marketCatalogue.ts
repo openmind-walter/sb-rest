@@ -1,34 +1,3 @@
-export type MarketFilter = {
-  textQuery?: string;
-  eventTypeIds?: string[];
-  eventIds?: string[];
-  competitionIds?: string[];
-  marketIds?: string[];
-  venues?: string[];
-  bspOnly?: boolean;
-  turnInPlayEnabled?: boolean;
-  inPlayOnly?: boolean;
-  marketBettingTypes?: MarketBettingType[];
-  marketCountries?: string[];
-  marketTypeCodes?: string[];
-  marketStartTime?: MarketTimeRange;
-  withOrders?: OrderStatus[];
-  raceTypes?: string[];
-};
-
-export enum SortDir {
-  EARLIEST_TO_LATEST = 'EARLIEST_TO_LATEST',
-  LATEST_TO_EARLIEST = 'LATEST_TO_EARLIEST',
-}
-
-export enum BetStatus {
-  SETTLED = 'SETTLED',
-  VOIDED = 'VOIDED',
-  LAPSED = 'LAPSED',
-  CANCELLED = 'CANCELLED',
-}
-
-export type OrderSubscription = {};
 
 export type MarketCatalogue = {
   marketId: string;
@@ -58,32 +27,8 @@ export type EventType = {
   name: string;
 };
 
-export type PlaceInstruction = {
-  orderType: OrderType;
-  selectionId: number;
-  handicap?: number;
-  side: string;
-  limitOrder?: LimitOrder;
-  //limitOnCloseOrder?: LimitOnCloseOrder, //TODO: ADD THESE
-  //marketOnCloseOrder?: MarketOnCloseOrder,
-  customerOrderRef?: string;
-};
 
-export enum OrderType {
-  LIMIT = 'LIMIT',
-  LIMIT_ON_CLOSE = 'LIMIT_ON_CLOSE',
-  MARKET_ON_CLOSE = 'MARKET_ON_CLOSE',
-}
 
-export type LimitOrder = {
-  size: number;
-  price: number;
-  persistenceType: PersistenceType;
-  timeInForce?: timeInForce;
-  minFillSize?: number;
-  betTargetType?: string;
-  betTargetSize?: string;
-};
 
 export enum PersistenceType {
   LAPSE = 'LAPSE',
@@ -186,17 +131,8 @@ export declare enum PriceData {
   EX_TRADED,
 }
 
-export declare enum MatchProjection {
-  NO_ROLLUP,
-  ROLLED_UP_BY_PRICE,
-  ROLLED_UP_BY_AVG_PRICE,
-}
 
-export declare enum OrderProjection {
-  ALL,
-  EXECUTABLE,
-  EXECUTION_COMPLETE,
-}
+
 
 export enum MarketStatus {
   INACTIVE,
@@ -205,15 +141,6 @@ export enum MarketStatus {
   CLOSED,
 }
 
-export declare enum RunnerStatus {
-  ACTIVE,
-  WINNER,
-  LOSER,
-  PLACED,
-  REMOVED_VACANT,
-  REMOVED,
-  HIDDEN,
-}
 
 export enum MarketProjection {
   /** Competition market projection. */
@@ -232,14 +159,3 @@ export enum MarketProjection {
   RUNNER_METADATA,
 }
 
-export type BetfairAuth = {
-  success: boolean;
-  sessionKey: string;
-  duration: number;
-  responseBody: {
-    token: string;
-    product: string;
-    status: string;
-    error: '';
-  };
-};

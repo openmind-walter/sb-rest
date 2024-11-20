@@ -96,48 +96,48 @@ const mockBookMakers = [
 
 
 
-export function getMockBookMakers(): BookmakerData[] {
-    return mockBookMakers.map(bm => parseBookmakerResponse(bm)).flat();
-}
+// export function getMockBookMakers(): BookmakerData[] {
+//     return mockBookMakers.map(bm => parseBookmakerResponse(bm)).flat();
+// }
 
-function parseBookmakerResponse(response: { status: number; data: any[] }): BookmakerData[] | null {
-    if (response.status !== 200) {
-        console.error("Invalid response status:", response.status);
-        return null;
-    }
-    const data = response.data;
-    return data.map((item) => {
-        const { bookmaker_id, data } = item;
+// function parseBookmakerResponse(response: { status: number; data: any[] }): BookmakerData[] | null {
+//     if (response.status !== 200) {
+//         console.error("Invalid response status:", response.status);
+//         return null;
+//     }
+//     const data = response.data;
+//     return data.map((item) => {
+//         const { bookmaker_id, data } = item;
 
-        const parsedRunners: Record<string, BookmakerRunner> = Object.entries(
-            JSON.parse(item?.runners)
-        ).reduce((acc, [key, runner]: [string, any]) => {
-            acc[key] = {
-                name: runner.name,
-                selection_id: runner.selection_id,
-                back_price: Number(runner.back_price),
-                lay_price: Number(runner.lay_price),
-                back_volume: Number(runner.back_volume),
-                lay_volume: Number(runner.lay_volume),
-                sort: Number(runner.sort),
-                status: runner.status as BookmakerRunnerStaus,
-            };
-            return acc;
-        }, {} as Record<string, BookmakerRunner>);
+//         const parsedRunners: Record<string, BookmakerRunner> = Object.entries(
+//             JSON.parse(item?.runners)
+//         ).reduce((acc, [key, runner]: [string, any]) => {
+//             acc[key] = {
+//                 name: runner.name,
+//                 selection_id: runner.selection_id,
+//                 back_price: Number(runner.back_price),
+//                 lay_price: Number(runner.lay_price),
+//                 back_volume: Number(runner.back_volume),
+//                 lay_volume: Number(runner.lay_volume),
+//                 sort: Number(runner.sort),
+//                 status: runner.status as BookmakerRunnerStaus,
+//             };
+//             return acc;
+//         }, {} as Record<string, BookmakerRunner>);
 
-        return {
-            bet_allow: Number(item?.bet_allow),
-            event_id: item?.event_id,
-            name: item?.name,
-            min_bet: Number(item?.min_bet),
-            is_active: Number(item.is_active),
-            runners: parsedRunners,
-            type: item?.type as BookmakerType,
-            status: item?.status as BookmakerStaus,
-            max_profit: Number(item?.max_profit),
-            bet_delay: Number(item?.bet_delay),
-            odd_type: item?.odd_type as BookmakerOddType,
-            max_bet: Number(item?.max_bet),
-        };
-    });
-}
+//         return {
+//             bet_allow: Number(item?.bet_allow),
+//             event_id: item?.event_id,
+//             name: item?.name,
+//             min_bet: Number(item?.min_bet),
+//             is_active: Number(item.is_active),
+//             runners: parsedRunners,
+//             type: item?.type as BookmakerType,
+//             status: item?.status as BookmakerStaus,
+//             max_profit: Number(item?.max_profit),
+//             bet_delay: Number(item?.bet_delay),
+//             odd_type: item?.odd_type as BookmakerOddType,
+//             // max_bet: Number(item?.max_bet),
+//         };
+//     });
+// }

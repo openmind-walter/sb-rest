@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { getMockBookMakers } from 'src/data/bookmark';
+
 import { BookmakerData, BookmakerRunner, BookmakerRunnerStaus, BookmakerStaus } from 'src/model/bookmaker';
 // Adjust the path as needed
 
@@ -19,7 +19,8 @@ export class BookmakerMockService implements OnModuleInit, OnModuleDestroy {
 
     private initializeMockData() {
         // Mock initial data
-        this.bookmakerData = getMockBookMakers()
+        this.bookmakerData = []
+        //  getMockBookMakers()
     }
 
     private startMockUpdates() {

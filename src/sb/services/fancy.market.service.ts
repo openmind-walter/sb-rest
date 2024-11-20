@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { LoggerService } from 'src/common/logger.service';
-import { MarketBettingType, MarketCatalogue } from 'src/model/bfApiTypes';
+import { MarketBettingType, MarketCatalogue } from 'src/model/marketCatalogue';
 import { FancyEvent, FancyEventMarket } from 'src/model/fancy';
 import { MarketDetails } from 'src/model/marketDetails';
 import { MarketDetailsDTO } from 'src/model/MarketDetails.dto';

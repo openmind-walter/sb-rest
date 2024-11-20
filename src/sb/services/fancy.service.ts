@@ -1,27 +1,27 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { LoggerService } from 'src/common/logger.service';
 import configuration from 'src/configuration';
-import { getFeacyMockEvetIds, getMockFancies } from 'src/data/fancy';
+import { getMockFancies } from 'src/data/fancy';
 import { FancyEvent, FancyEventMarket } from 'src/model/fancy';
 import { RedisMultiService } from 'src/redis/redis.multi.service';
-import { CachedKeys } from 'src/utlities';
+import { CachedKeys, parseFancyResponse } from 'src/utlities';
 import { MarketDetailsService } from './fancy.market.service';
-import { FancyMockService } from './fancyMock.service';
 import { FancyMarketUpdateDto } from '../dto/fancy.market.update.dto ';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
 import * as http from 'http';
-import { MarketCatalogue } from 'src/model/bfApiTypes';
+import { MarketCatalogue } from 'src/model/marketCatalogue';
 
 
 
 @Injectable()
 export class FancyService {
 
-    private bf_rest_SERVER_URL = 'BF_REST_SERVER_URL'
+    private bf_rest_SERVER_URL = 'BF_REST_SERVER_URL';
+    private sb_market_base_url = "SB_MARKET_BASE_URL"
     private axiosInstance: AxiosInstance;
     constructor(private configService: ConfigService, private redisMutiService: RedisMultiService,
-        private marketDetailsService: MarketDetailsService, private logger: LoggerService, private fancyMockSerivice: FancyMockService) {
+        private marketDetailsService: MarketDetailsService, private logger: LoggerService) {
         this.axiosInstance = axios.create({
             httpAgent: new http.Agent({
                 keepAlive: true,
@@ -52,27 +52,18 @@ export class FancyService {
             const response = await this.axiosInstance.get(url, { params });
             if (!response.data?.data) return []
             let market = response.data?.data as MarketCatalogue[];
-            //used  later
-            // return market.map(market => {
-            //     return {
-            //         id: market?.event.id,
-            //         name: market?.event.name,
-            //         startTime: market?.marketStartTime,
-            //         competitionName: market?.competition.name,
-            //         marketId: market?.marketId,
-            //         runner: market?.runners
-            //     }
-            // })
-            //  mock event id
-            const mockeventIds = await getFeacyMockEvetIds();
-            return market.map((marketItem, index) => ({
-                id: mockeventIds[index % mockeventIds.length],
-                name: marketItem?.event.name,
-                startTime: marketItem?.marketStartTime,
-                competitionName: marketItem?.competition.name,
-                marketId: marketItem?.marketId,
-                runner: marketItem?.runners,
-            }));
+            return market.map(market => {
+                return {
+                    id: market?.event.id,
+                    name: market?.event.name,
+                    startTime: market?.marketStartTime,
+                    competitionName: market?.competition.name,
+                    marketId: market?.marketId,
+                    runner: market?.runners
+                }
+            })
+
+
 
         }
         catch (error) {
@@ -125,20 +116,20 @@ export class FancyService {
     async getFancyEventMarkets(eventId, marketId) {
         try {
             const fancyMarkets = await this.getFancyEvent(eventId);
-
             return fancyMarkets.find(market => market.marketId == marketId)
         } catch (error) {
             this.logger.error(`Get fancy event market : ${error.message}`, FancyService.name);
         }
-
     }
 
 
     async getFancyAPiEvent(eventId: string) {
         try {
-            let fancyeventData = this.fancyMockSerivice.getMarketByEventId(eventId);
-            if (fancyeventData)
-                return { ...fancyeventData, markets: Object.values(fancyeventData.markets) };
+            const url = `${this.configService.get(this.sb_market_base_url)}/api/active-fancy/${eventId}`
+            const response = await this.axiosInstance.get(url);
+            if (!response.data?.data) return null
+            const fancyeventData = parseFancyResponse(response?.data);
+            return { ...fancyeventData, markets: Object.values(fancyeventData.markets) };
         }
         catch (error) {
             this.logger.error(`Get fancy event: ${error.message}`, FancyService.name);

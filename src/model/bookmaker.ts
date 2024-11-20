@@ -10,13 +10,13 @@ export class BookmakerRunner {
 }
 
 export enum BookmakerRunnerStaus {
-    ACTIVE= "ACTIVE",
-    LOSER="LOSER",
+    ACTIVE = "ACTIVE",
+    LOSER = "LOSER",
     BALL_RUNNING = "BALL_RUNNING",
     CLOSED = "CLOSED",
     SUSPENDED = "SUSPENDED",
     REMOVED = "REMOVED",
-    WINNER="WINNER"
+    WINNER = "WINNER"
 }
 
 
@@ -32,13 +32,15 @@ export class BookmakerData {
     max_profit: number;
     bet_delay: number;
     odd_type: BookmakerOddType;
-    max_bet: number;
+    off_play_max_bet: number;
+    is_other_rate_active: number;
 }
 
 
 export enum BookmakerType {
     MATCH_ODDS = 'MATCH_ODDS',
-    TO_WIN_THE_TOSS = 'TO_WIN_THE_TOSS'
+    TO_WIN_THE_TOSS = 'TO_WIN_THE_TOSS',
+    EXTRA_BOOKMAKER = 'EXTRA_BOOKMAKER'
 }
 
 export enum BookmakerOddType {

@@ -32,21 +32,22 @@ export class BookMakerUpdateService implements OnModuleInit, OnModuleDestroy {
             );
 
             const activeBookMaker = activeBookMakersEvents?.length > 0
-                ? activeBookMakersEvents.map(e => e.replace(configuration.bookMaker.topic, ''))
+                ? activeBookMakersEvents.map(e => e.replace(configuration.bookMaker.topic, '')).filter(e => e != 'undefined')
                 : [];
 
             if (activeBookMaker.length > 0) {
                 const bookMkaerEvents = await this.fetchBookMakerEvents(activeBookMaker);
+
                 await this.batchWriteToRedis(bookMkaerEvents);
             }
         } catch (error) {
+            console.error(error)
             this.logger.error(`Updating book maker events:`, BookMakerUpdateService.name);
 
         }
     }
     private async fetchBookMakerEvents(activeBookMakers: string[]) {
         return await Promise.all(activeBookMakers.map(eventId => {
-            //
             return this.bookMakerService.getBookMakerAPiEvent(eventId);
         }))
     }
