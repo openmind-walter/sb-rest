@@ -18,7 +18,7 @@ import { MarketCatalogue } from 'src/model/marketCatalogue';
 export class FancyService {
 
     private bf_rest_SERVER_URL = 'BF_REST_SERVER_URL';
-    private sb_market_base_url = "SB_MARKET_BASE_URL"
+    private sb_market_base_url = "PROVIDER_SB_ENDPOINT"
     private axiosInstance: AxiosInstance;
     constructor(private configService: ConfigService, private redisMutiService: RedisMultiService,
         private marketDetailsService: MarketDetailsService, private logger: LoggerService) {
