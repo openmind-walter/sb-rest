@@ -89,7 +89,7 @@ export function parseBookmakerResponse(response: { status: number; data: any[] }
     ).reduce((acc, [key, runner]: [string, any]) => {
       acc[key] = {
         name: runner.name,
-        selection_id: runner.selection_id,
+        selection_id: Number(runner.selection_id),
         back_price: Number(runner.back_price),
         lay_price: Number(runner.lay_price),
         back_volume: Number(runner.back_volume),
@@ -101,6 +101,7 @@ export function parseBookmakerResponse(response: { status: number; data: any[] }
     }, {} as Record<string, BookmakerRunner>);
     // console.log(item)
     return {
+      bookmaker_id: item.bookmaker_id,
       bet_allow: Number(data?.bet_allow),
       event_id: data?.event_id,
       name: data?.name,

@@ -1,6 +1,6 @@
 export class BookmakerRunner {
     name: string;
-    selection_id: string;
+    selection_id: number;
     back_price: number;
     lay_price: number;
     back_volume: number;
@@ -21,6 +21,7 @@ export enum BookmakerRunnerStaus {
 
 
 export class BookmakerData {
+    bookmaker_id: string;
     bet_allow: number;
     event_id: string;
     name: string;

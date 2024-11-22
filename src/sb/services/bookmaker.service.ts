@@ -32,11 +32,12 @@ export class BookMakerService {
     async getBookMakerEvent(eventId: string) {
         try {
             const bookMakerData = await this.getExitBookMakerMarket(eventId);
-            if (bookMakerData) return bookMakerData;
+            if (bookMakerData) {
+                return bookMakerData;
+            }
             const bookMakerEvent = await this.getBookMakerAPiEvent(eventId);
             if (bookMakerEvent) {
                 const done = await this.updateBookMakerCache(eventId, bookMakerEvent);
-                // this.marketDetailsService.createMarketDetails(fancyevent);
                 return bookMakerEvent;
             }
 
@@ -45,6 +46,16 @@ export class BookMakerService {
         catch (error) {
             this.logger.error(`Get book maker event: ${error.message}`, BookMakerService.name);
 
+        }
+    }
+
+
+    async getBookMakerEventBookMaker(event_id, bookmaker_id) {
+        try {
+            const bookMakers = await this.getBookMakerEvent(event_id)
+            return bookMakers?.length > 0 ? bookMakers.find(bm => bm.bookmaker_id == bookmaker_id) : null
+        } catch (error) {
+            this.logger.error(`Get  a book maker  of  event : ${error.message}`, BookMakerService.name);
         }
     }
 
@@ -68,7 +79,7 @@ export class BookMakerService {
 
 
 
-    async getExitBookMakerMarket(eventId: string): Promise<BookmakerData> {
+    async getExitBookMakerMarket(eventId: string): Promise<BookmakerData[]> {
         try {
             const bookMkaerData = await this.redisMutiService.get(configuration.redis.client.clientBackEnd,
                 CachedKeys.getBookMakerEvent(eventId));

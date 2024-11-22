@@ -1,4 +1,4 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Param, ValidationPipe } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ApiMessage, ApiResponseDto } from 'src/common/api.response';
 import { BookMakerService } from '../services/bookmaker.service';
@@ -22,6 +22,16 @@ export class BookMakerController {
         }
     }
 
+
+    @Get('event-bookmaker/:event_id/:bookmaker_id')
+    async getEventBookMakerMarket(@Param('event_id') event_id: string, @Param('bookmaker_id', new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true })) bookmaker_id: string,) {
+        try {
+            const data = await this.bookMakerService.getBookMakerEventBookMaker(event_id, bookmaker_id);
+            return new ApiResponseDto(ApiMessage.SUCCESS, data ?? null);
+        } catch (err) {
+            return new ApiResponseDto(ApiMessage.ERROR, 'Something went wrong')
+        }
+    }
 
 
 

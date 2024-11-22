@@ -34,10 +34,10 @@ export class FanancyController {
 
 
     @Get('event-market/:event_id/:market_id')
-    async getFancyEventMarket(@Param('event_id') event_id: string,   @Param('market_id', new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true })) market_id: string,) {
+    async getFancyEventMarket(@Param('event_id') event_id: string, @Param('market_id', new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true })) market_id: string,) {
         try {
-            const data = await this.fancyService.getFancyEventMarkets(event_id,market_id);
-            return new ApiResponseDto(ApiMessage.SUCCESS, data ?? []);
+            const data = await this.fancyService.getFancyEventMarkets(event_id, market_id);
+            return new ApiResponseDto(ApiMessage.SUCCESS, data ?? null);
         } catch (err) {
             return new ApiResponseDto(ApiMessage.ERROR, 'Something went wrong')
         }

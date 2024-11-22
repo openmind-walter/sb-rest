@@ -63,3 +63,9 @@ enum MarketStatus {
   SUSPENDED,
   CLOSED,
 }
+
+export class MarketSelection {
+  MARKET_DETAILS_ID: number; // bigint NOT NULL
+  SELECTION_DETAILS_ID: number; // bigint NOT NULL
+  HANDICAP: number; // numeric(6,2) NOT NULL DEFAULT 0.0
+}
