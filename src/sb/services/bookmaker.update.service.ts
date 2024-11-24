@@ -52,19 +52,19 @@ export class BookMakerUpdateService implements OnModuleInit, OnModuleDestroy {
         }))
     }
 
-    private async batchWriteToRedis(bookMakerEvents: BookmakerData[] | any[]) {
+    private async batchWriteToRedis(bookMakers: BookmakerData[] | any[]) {
         const batchSize = 100;
         const batches: BookmakerData[][] = [];
 
-        for (let i = 0; i < bookMakerEvents.length; i += batchSize) {
-            batches.push(bookMakerEvents.slice(i, i + batchSize));
+        for (let i = 0; i < bookMakers.length; i += batchSize) {
+            batches.push(bookMakers.slice(i, i + batchSize));
         }
         for (const batch of batches) {
             await Promise.all(
-                batch.map(async (bookMakerEvent) => {
+                batch.map(async (bookMaker) => {
                     try {
-                        const eventId = bookMakerEvent.event_id;
-                        const bmStringified = JSON.stringify(bookMakerEvent);
+                        const eventId = bookMaker.event_id;
+                        const bmStringified = JSON.stringify(bookMaker);
                         await this.redisMutiService.set(
                             configuration.redis.client.clientBackEnd,
                             CachedKeys.getBookMakerEvent(eventId),
@@ -72,18 +72,14 @@ export class BookMakerUpdateService implements OnModuleInit, OnModuleDestroy {
                             bmStringified
                         );
 
-                        // Publish to a Redis channel (if applicable)
-                        // await this.redisMutiService.publish(
-                        //     configuration.redis.client.clientBackEnd,
-                        //     CachedKeys.getBookMakerEvent(eventId),
-                        //     bmStringified
-                        // );
-                        3
+
+                        await this.redisMutiService.publish(configuration.redis.client.clientFrontEndPub,
+                            `sb_${eventId}_${bookMaker.bookmaker_id}`, bmStringified)
+
 
                     } catch (error) {
-                        // Log specific errors for failed writes
                         this.logger.error(
-                            `Error writing bookmaker event with event_id ${bookMakerEvent.event_id} to Redis: ${error.message}`,
+                            `Error writing bookmaker event with event_id  to Redis: ${error.message}`,
                             BookMakerUpdateService.name
                         );
                     }

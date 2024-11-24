@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { LoggerService } from 'src/common/logger.service';
 import { RedisModule } from 'src/redis/redis.module';
-import { FanancyController } from './controllers/fanancy.controller';
+import { FanancyController } from './controllers/fancy.controller';
 import { FancyService } from './services/fancy.service';
 import { SbController } from './controllers/sb.controller';
 import { BookMakerService } from './services/bookmaker.service';

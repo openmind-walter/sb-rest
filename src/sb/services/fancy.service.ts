@@ -69,7 +69,6 @@ export class FancyService {
             const fancyevent = await this.getFancyAPiEvent(eventId);
             if (fancyevent) {
                 const done = await this.updateFancyCache(eventId, fancyevent);
-                // this.marketDetailsService.createMarketDetails(fancyevent);
             }
 
             return fancyevent;
@@ -107,8 +106,8 @@ export class FancyService {
 
     async getFancyEventMarkets(eventId, marketId) {
         try {
-            const fancyMarkets = await this.getFancyEvent(eventId);
-            return fancyMarkets.find(market => market.ninewMarketId == marketId)
+            const fancyMarkets = await this.getFancyAPiEvent(eventId);
+            return fancyMarkets.markets.find(market => market.id == marketId)
         } catch (error) {
             this.logger.error(`Get fancy event market : ${error.message}`, FancyService.name);
         }

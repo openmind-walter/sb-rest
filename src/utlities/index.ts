@@ -119,3 +119,7 @@ export function parseBookmakerResponse(response: { status: number; data: any[] }
     };
   });
 }
+
+export function transformBookMakerRunners(runners: Record<string, BookmakerRunner>): BookmakerRunner[] {
+  return Object.values(runners);
+}
