@@ -2,9 +2,9 @@
 import { Injectable } from '@nestjs/common';
 import { RedisMultiService } from 'src/redis/redis.multi.service';
 import configuration from 'src/configuration';
-import { CachedKeys, parseBookmakerResponse } from 'src/utlities';
+import { CachedKeys, parseBookmakerResponse, transformBookMakerRunners } from 'src/utlities';
 import { LoggerService } from 'src/common/logger.service';
-import { BookmakerData } from 'src/model/bookmaker';
+import { BookmakerData, BookmakerRunner } from 'src/model/bookmaker';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
 import * as http from 'http';
@@ -55,7 +55,7 @@ export class BookMakerService {
             const bookMakers = await this.getBookMakerEvent(event_id)
             return bookMakers?.length > 0 ? bookMakers.find(bm => bm.bookmaker_id == bookmaker_id) : null
         } catch (error) {
-            this.logger.error(`Get  a book maker  of  event : ${error.message}`, BookMakerService.name);
+            this.logger.error(`Get a book maker of event : ${error.message}`, BookMakerService.name);
         }
     }
 
@@ -68,8 +68,13 @@ export class BookMakerService {
             const response = await this.axiosInstance.get(url);
             if (!response.data?.data) return null;
             let bookMakerEventData = parseBookmakerResponse(response.data)
-            if (bookMakerEventData)
-                return bookMakerEventData
+            if (bookMakerEventData) {
+                bookMakerEventData.map(bookMaker => {
+                    const runners = transformBookMakerRunners(bookMaker.runners as Record<string, BookmakerRunner>)
+                    return { ...bookMaker, runners }
+                })
+            }
+            return bookMakerEventData
         }
         catch (error) {
             this.logger.error(`Get book maker  from provider: ${error.message}`, BookMakerService.name);
@@ -89,7 +94,7 @@ export class BookMakerService {
             }
         }
         catch (err) {
-            this.logger.error(`Get  exist book maker event: ${err.message}`, BookMakerService.name);
+            this.logger.error(`Get cached book maker event: ${err.message}`, BookMakerService.name);
         }
     }
 

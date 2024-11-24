@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import { LoggerService } from 'src/common/logger.service';
 import configuration from 'src/configuration';
-import { FancyEvent, MaraketStaus } from 'src/model/fancy';
+import { FancyEvent, FancyEventMarket, MaraketStaus } from 'src/model/fancy';
 import { PlaceBet, SIDE } from 'src/model/placebet';
 import { RedisMultiService } from 'src/redis/redis.multi.service';
 import { CachedKeys, generateGUID } from 'src/utlities';
@@ -96,11 +96,9 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
                             fancyStringfy
                         );
 
-                        await Promise.all(fancyEvent?.markets?.map(fancyEventMarket =>
+                        await Promise.all(fancyEvent?.markets?.map((fancyEventMarket: FancyEventMarket) =>
                             this.redisMutiService.publish(configuration.redis.client.clientFrontEndPub,
-                                `sb_${fancyEvent.eventId}_${fancyEventMarket}`, JSON.stringify(FancyMarketUpdateDto.fromFancyEventMarket(fancyEventMarket)))))
-
-                        //  fancyEvent: { event_id: '30816332', markets: [Array] }
+                                `sb_${fancyEvent.eventId}_${fancyEventMarket.id}`, JSON.stringify(FancyMarketUpdateDto.fromFancyEventMarket(fancyEventMarket)))))
 
                     } catch (error) {
                         this.logger.error(`Error writing fancy event  to Redis: ${error.message}`, FancyUpdateService.name);

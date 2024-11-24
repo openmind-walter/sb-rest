@@ -27,7 +27,7 @@ export class BookmakerData {
     name: string;
     min_bet: number;
     is_active: number;
-    runners: Record<string, BookmakerRunner>;
+    runners: Record<string, BookmakerRunner> | BookmakerRunner[];
     type: BookmakerType;
     status: BookmakerStaus;
     max_profit: number;
