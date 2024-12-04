@@ -5,11 +5,17 @@ export enum SIDE {
 
 export class PlaceBet {
     ID: number;
-    SIDE: SIDE;
-    EVENT_ID: string;
-    SPORT_ID: number;
-    MARKET_ID: string;
+    BF_ACCOUNT_ID: number;
     BF_ACCOUNT: string;
+    BF_SIZE: number;
     PRICE: number;
-    SIZE: number;
+    SELECTION_ID: number;
+    MARKET_ID: string;
+    SPORT_ID: string;
+    EVENT_ID: string;
+    SIDE: string;
+    PERSISTENCE_TYPE: string;
+    handicap: string;
+    ORDER_TYPE: string;
+    BETTING_TYPE: string;
 }

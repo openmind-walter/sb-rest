@@ -4,7 +4,7 @@ export default {
     eventTtl: 3600,
   },
   bookMaker: {
-    topic: "sb_bookmakerd_",
+    topic: "sb_bookmaker_",
     eventTtl: 3600,
   },
   redis: {

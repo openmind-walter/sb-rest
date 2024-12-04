@@ -2,28 +2,24 @@
 import { Injectable } from '@nestjs/common';
 import { RedisMultiService } from 'src/redis/redis.multi.service';
 import configuration from 'src/configuration';
-import { CachedKeys, parseBookmakerResponse, transformBookMakerRunners } from 'src/utlities';
+import { CachedKeys, parseBookmakerResponse, } from 'src/utlities';
 import { LoggerService } from 'src/common/logger.service';
-import { BookmakerData, BookmakerRunner } from 'src/model/bookmaker';
+import { BookmakerData } from 'src/model/bookmaker';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
 import * as http from 'http';
+import { RestService } from './rest.service';
+
 
 @Injectable()
 export class BookMakerService {
     private sb_market_base_url = "PROVIDER_SB_ENDPOINT"
-    private axiosInstance: AxiosInstance;
+
     constructor(
         private logger: LoggerService,
-        private readonly redisMutiService: RedisMultiService, private configService: ConfigService) {
-        this.axiosInstance = axios.create({
-            httpAgent: new http.Agent({
-                keepAlive: true,
-                maxSockets: 100,
-                maxFreeSockets: 50,
-                timeout: 5000,
-            }),
-        });
+        private readonly redisMutiService: RedisMultiService, private configService: ConfigService,
+        private restService: RestService) {
+
     }
 
 
@@ -31,13 +27,14 @@ export class BookMakerService {
 
     async getBookMakerEvent(eventId: string) {
         try {
+            console.log("====> called")
             const bookMakerData = await this.getExitBookMakerMarket(eventId);
             if (bookMakerData) {
                 return bookMakerData;
             }
             const bookMakerEvent = await this.getBookMakerAPiEvent(eventId);
             if (bookMakerEvent) {
-                const done = await this.updateBookMakerCache(eventId, bookMakerEvent);
+                await this.updateBookMakerCache(eventId, bookMakerEvent);
                 return bookMakerEvent;
             }
 
@@ -52,8 +49,11 @@ export class BookMakerService {
 
     async getBookMakerEventBookMaker(event_id, bookmaker_id) {
         try {
+
             const bookMakers = await this.getBookMakerEvent(event_id)
+
             return bookMakers?.length > 0 ? bookMakers.find(bm => bm.bookmaker_id == bookmaker_id) : null
+
         } catch (error) {
             this.logger.error(`Get a book maker of event : ${error.message}`, BookMakerService.name);
         }
@@ -62,19 +62,17 @@ export class BookMakerService {
 
 
 
-    async getBookMakerAPiEvent(eventId: string) {
+    async getBookMakerAPiEvent(eventId: string, market_id?: string) {
         try {
             const url = `${this.configService.get(this.sb_market_base_url)}/api/active-bm/${eventId}`
-            const response = await this.axiosInstance.get(url);
-            if (!response.data?.data) return null;
-            let bookMakerEventData = parseBookmakerResponse(response.data)
-            if (bookMakerEventData) {
-                bookMakerEventData.map(bookMaker => {
-                    const runners = transformBookMakerRunners(bookMaker.runners as Record<string, BookmakerRunner>)
-                    return { ...bookMaker, runners }
-                })
+            const bookMakerResponse = await axios.get(url);
+            if (!bookMakerResponse.data?.data) return null;
+            const marketId = market_id ? market_id : await this.restService.getBetfairEventMarketId(eventId);
+            if (!marketId) {
+                // this.logger.error(`Get book maker  from provider:  betfair  market id  not  found `, BookMakerService.name);
+                return null;
             }
-            return bookMakerEventData
+            return parseBookmakerResponse(bookMakerResponse.data, marketId)
         }
         catch (error) {
             this.logger.error(`Get book maker  from provider: ${error.message}`, BookMakerService.name);

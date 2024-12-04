@@ -2,9 +2,13 @@ import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { LoggerService } from 'src/common/logger.service';
 import configuration from 'src/configuration';
 import { RedisMultiService } from 'src/redis/redis.multi.service';
-import { CachedKeys } from 'src/utlities';
+import { CachedKeys, } from 'src/utlities';
 import { BookMakerService } from './bookmaker.service';
-import { BookmakerData } from 'src/model/bookmaker';
+import { BookmakerData, BookmakerStaus, } from 'src/model/bookmaker';
+import { RestService } from './rest.service';
+import { EventsResult } from 'src/model/eventsResult';
+
+
 
 @Injectable()
 export class BookMakerUpdateService implements OnModuleInit, OnModuleDestroy {
@@ -13,11 +17,12 @@ export class BookMakerUpdateService implements OnModuleInit, OnModuleDestroy {
     constructor(
         private readonly redisMutiService: RedisMultiService,
         private readonly bookMakerService: BookMakerService,
-        private logger: LoggerService
+        private logger: LoggerService,
+        private restService: RestService
     ) { }
 
     onModuleInit() {
-        this.bookMakerEventUpdateInterval = setInterval(() => this.bookMakerEventUpdate(), 500);
+        this.bookMakerEventUpdateInterval = setInterval(() => this.bookMakerEventUpdate(), 1500);
     }
 
     onModuleDestroy() {
@@ -47,46 +52,47 @@ export class BookMakerUpdateService implements OnModuleInit, OnModuleDestroy {
         }
     }
     private async fetchBookMakerEvents(activeBookMakers: string[]) {
+      const  boomakers=  await  this.bookMakerService.getExitBookMakerMarket(activeBookMakers[0]);
+        const  marketId=boomakers?.length>0? boomakers[0].market_id:undefined
         return await Promise.all(activeBookMakers.map(eventId => {
-            return this.bookMakerService.getBookMakerAPiEvent(eventId);
+            return this.bookMakerService.getBookMakerAPiEvent(eventId,marketId);
         }))
     }
 
-    private async batchWriteToRedis(bookMakers: BookmakerData[] | any[]) {
-        const batchSize = 100;
-        const batches: BookmakerData[][] = [];
-
-        for (let i = 0; i < bookMakers.length; i += batchSize) {
-            batches.push(bookMakers.slice(i, i + batchSize));
-        }
-        for (const batch of batches) {
-            await Promise.all(
-                batch.map(async (bookMaker) => {
-                    try {
-                        const eventId = bookMaker.event_id;
+    private async batchWriteToRedis(bookMakersList: BookmakerData[][] | any[]) {
+        bookMakersList = bookMakersList.filter(Bookmaker => Bookmaker != null).filter(Bookmaker => Bookmaker.length == 0);
+        await Promise.all(
+            bookMakersList.map(async (bookMakers: BookmakerData[]) => {
+                try {
+                    const bmsStringified = JSON.stringify(bookMakers);
+                    await this.redisMutiService.set(
+                        configuration.redis.client.clientBackEnd,
+                        CachedKeys.getBookMakerEvent(bookMakers[0].event_id),
+                        3600,
+                        bmsStringified
+                    );
+                    bookMakers.map(async (bookMaker: BookmakerData) => {
+                        if (bookMaker.status == BookmakerStaus.CLOSED || bookMaker.status == BookmakerStaus.REMOVED) {
+                            const eventsResult = EventsResult.getFromBookMaker(bookMaker);
+                            await this.restService.createEventsResult(eventsResult)
+                        }
+                        const market_id = bookMaker.market_id;
                         const bmStringified = JSON.stringify(bookMaker);
-                        await this.redisMutiService.set(
-                            configuration.redis.client.clientBackEnd,
-                            CachedKeys.getBookMakerEvent(eventId),
-                            3600,
-                            bmStringified
-                        );
-
-
                         await this.redisMutiService.publish(configuration.redis.client.clientFrontEndPub,
-                            `sb_${eventId}_${bookMaker.bookmaker_id}`, bmStringified)
+                            `${market_id}}_${bookMaker.bookmaker_id}`, bmStringified)
+                    })
+                } catch (error) {
+                    this.logger.error(
+                        `Error writing book maker event with event_id  to Redis: ${error.message}`,
+                        BookMakerUpdateService.name
+                    );
+                }
+            })
+        );
 
-
-                    } catch (error) {
-                        this.logger.error(
-                            `Error writing bookmaker event with event_id  to Redis: ${error.message}`,
-                            BookMakerUpdateService.name
-                        );
-                    }
-                })
-            );
-        }
     }
+
+
 }
 
 
