@@ -2,12 +2,13 @@ import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { LoggerService } from 'src/common/logger.service';
 import configuration from 'src/configuration';
 import { RedisMultiService } from 'src/redis/redis.multi.service';
-import { CachedKeys, generateGUID } from 'src/utlities';
+import { CachedKeys, } from 'src/utlities';
 import { BookMakerService } from './bookmaker.service';
-import { BookmakerData, BookmakerRunnerStaus, BookmakerStaus } from 'src/model/bookmaker';
-import axios from 'axios';
-import { PlaceBet, SIDE } from 'src/model/placebet';
-import { MaraketStaus } from 'src/model/fancy';
+import { BookmakerData, BookmakerStaus, } from 'src/model/bookmaker';
+import { RestService } from './rest.service';
+import { EventsResult } from 'src/model/eventsResult';
+
+
 
 @Injectable()
 export class BookMakerUpdateService implements OnModuleInit, OnModuleDestroy {
@@ -16,11 +17,12 @@ export class BookMakerUpdateService implements OnModuleInit, OnModuleDestroy {
     constructor(
         private readonly redisMutiService: RedisMultiService,
         private readonly bookMakerService: BookMakerService,
-        private logger: LoggerService
+        private logger: LoggerService,
+        private restService: RestService
     ) { }
 
     onModuleInit() {
-        this.bookMakerEventUpdateInterval = setInterval(() => this.bookMakerEventUpdate(), 500);
+        this.bookMakerEventUpdateInterval = setInterval(() => this.bookMakerEventUpdate(), 1500);
     }
 
     onModuleDestroy() {
@@ -50,81 +52,47 @@ export class BookMakerUpdateService implements OnModuleInit, OnModuleDestroy {
         }
     }
     private async fetchBookMakerEvents(activeBookMakers: string[]) {
+      const  boomakers=  await  this.bookMakerService.getExitBookMakerMarket(activeBookMakers[0]);
+        const  marketId=boomakers?.length>0? boomakers[0].market_id:undefined
         return await Promise.all(activeBookMakers.map(eventId => {
-            return this.bookMakerService.getBookMakerAPiEvent(eventId);
+            return this.bookMakerService.getBookMakerAPiEvent(eventId,marketId);
         }))
     }
 
-    private async batchWriteToRedis(bookMakers: BookmakerData[] | any[]) {
-        const batchSize = 100;
-        const batches: BookmakerData[][] = [];
-
-        for (let i = 0; i < bookMakers.length; i += batchSize) {
-            batches.push(bookMakers.slice(i, i + batchSize));
-        }
-        for (const batch of batches) {
-            await Promise.all(
-                batch.map(async (bookMaker) => {
-                    try {
-                        const eventId = bookMaker.event_id;
-                        const bmStringified = JSON.stringify(bookMaker);
-                        await this.redisMutiService.set(
-                            configuration.redis.client.clientBackEnd,
-                            CachedKeys.getBookMakerEvent(eventId),
-                            3600,
-                            bmStringified
-                        );
-                        await this.redisMutiService.publish(configuration.redis.client.clientFrontEndPub,
-                            `sb_${eventId}_${bookMaker.bookmaker_id}`, bmStringified)
-
-                    } catch (error) {
-                        this.logger.error(
-                            `Error writing book maker event with event_id  to Redis: ${error.message}`,
-                            BookMakerUpdateService.name
-                        );
-                    }
-                })
-            );
-        }
-    }
-
-    async checkBetSettlement(eventId: string, bookMaker: BookmakerData) {
-        try {
-            if (bookMaker.status == BookmakerStaus.OPEN) return
-            const response = await axios.get(`${process.env.API_SERVER_URL}/v1/api/bf_placebet/event_market_pending/${eventId}/${bookMaker.bookmaker_id}`);
-            const bets: PlaceBet[] = response?.data?.result ?? [];
-            if (Array.isArray(bookMaker?.runners) && bets.length > 0) {
-                for (const runner of bookMaker.runners) {
-                    if (runner.status != BookmakerRunnerStaus.ACTIVE) {
-
-                        for (const bet of bets) {
-
-                            // if (bet.)
-
+    private async batchWriteToRedis(bookMakersList: BookmakerData[][] | any[]) {
+        bookMakersList = bookMakersList.filter(Bookmaker => Bookmaker != null).filter(Bookmaker => Bookmaker.length == 0);
+        await Promise.all(
+            bookMakersList.map(async (bookMakers: BookmakerData[]) => {
+                try {
+                    const bmsStringified = JSON.stringify(bookMakers);
+                    await this.redisMutiService.set(
+                        configuration.redis.client.clientBackEnd,
+                        CachedKeys.getBookMakerEvent(bookMakers[0].event_id),
+                        3600,
+                        bmsStringified
+                    );
+                    bookMakers.map(async (bookMaker: BookmakerData) => {
+                        if (bookMaker.status == BookmakerStaus.CLOSED || bookMaker.status == BookmakerStaus.REMOVED) {
+                            const eventsResult = EventsResult.getFromBookMaker(bookMaker);
+                            await this.restService.createEventsResult(eventsResult)
                         }
-                    }
-
-
-
+                        const market_id = bookMaker.market_id;
+                        const bmStringified = JSON.stringify(bookMaker);
+                        await this.redisMutiService.publish(configuration.redis.client.clientFrontEndPub,
+                            `${market_id}}_${bookMaker.bookmaker_id}`, bmStringified)
+                    })
+                } catch (error) {
+                    this.logger.error(
+                        `Error writing book maker event with event_id  to Redis: ${error.message}`,
+                        BookMakerUpdateService.name
+                    );
                 }
-            }
-        } catch (error) {
-            console.log(error);
-            this.logger.error(`Error on  check book maker bet settlement: ${error.message}`, BookMakerUpdateService.name);
-        }
+            })
+        );
+
     }
 
 
-    async betSettlement(BF_PLACEBET_ID: number, RESULT: 0 | 1, BF_SIZE: number) {
-        try {
-            const BF_BET_ID = generateGUID();
-            const respose = (await axios.post(`${process.env.API_SERVER_URL}/v1/api/bf_settlement/fancy`, { BF_BET_ID, BF_PLACEBET_ID, RESULT, BF_SIZE }))?.data;
-            if (!respose?.result)
-                this.logger.error(`Error on  bet settlement: ${respose}`, BookMakerUpdateService.name);
-        } catch (error) {
-            this.logger.error(`Error on book maker bet settlement: ${error.message}`, BookMakerUpdateService.name);
-        }
-    }
 }
 
 

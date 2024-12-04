@@ -24,6 +24,7 @@ export class BookmakerData {
     bookmaker_id: string;
     bet_allow: number;
     event_id: string;
+    market_id: string;
     name: string;
     min_bet: number;
     is_active: number;
