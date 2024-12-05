@@ -124,3 +124,7 @@ export function parseBookmakerResponse(response: { status: number; data: any[] }
 export function transformBookMakerRunners(runners: Record<string, BookmakerRunner>): BookmakerRunner[] {
   return Object.values(runners);
 }
+export function makeUniqueItems(input: string): string {
+  const uniqueItems = [...new Set(input.split(','))];
+  return uniqueItems.join(',');
+}
