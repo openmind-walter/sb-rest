@@ -2,15 +2,16 @@
 import { Injectable } from '@nestjs/common';
 import { RedisMultiService } from 'src/redis/redis.multi.service';
 import configuration from 'src/configuration';
-import { CachedKeys, parseBookmakerResponse, } from 'src/utlities';
+import { CachedKeys, makeUniqueItems, parseBookmakerResponse, } from 'src/utlities';
 import { LoggerService } from 'src/common/logger.service';
 import { BookmakerData } from 'src/model/bookmaker';
 import { ConfigService } from '@nestjs/config';
-import axios, { AxiosInstance } from 'axios';
-import * as http from 'http';
+import axios from 'axios';
 import { RestService } from './rest.service';
+import { ActiveBookmakerWL } from 'src/model';
+import { ActiveBookmakerWLDto } from '../dto/wl.bm.dto';
 
-
+const BOOKMARKER_REDIS_FIELD = "bookmaker_ids"
 @Injectable()
 export class BookMakerService {
     private sb_market_base_url = "PROVIDER_SB_ENDPOINT"
@@ -27,7 +28,6 @@ export class BookMakerService {
 
     async getBookMakerEvent(eventId: string) {
         try {
-            console.log("====> called")
             const bookMakerData = await this.getExitBookMakerMarket(eventId);
             if (bookMakerData) {
                 return bookMakerData;
@@ -37,7 +37,6 @@ export class BookMakerService {
                 await this.updateBookMakerCache(eventId, bookMakerEvent);
                 return bookMakerEvent;
             }
-
             return [];
         }
         catch (error) {
@@ -108,6 +107,32 @@ export class BookMakerService {
         }
         catch (error) {
             this.logger.error(`update book  maker Cache: ${error.message}`, BookMakerService.name);
+        }
+    }
+
+
+
+    async getWhiteLabelBookMaker(domain_name: string) {
+        try {
+            console.log(`${this.configService.get('API_SERVER_URL')}/v1/api/white_label_active_bookmaker/${domain_name}`)
+            const response = await axios.get(`${this.configService.get('API_SERVER_URL')}/v1/api/white_label_active_bookmaker/${domain_name}`);
+            const bmWLS = (response?.data?.result?.length ? response?.data?.result[0] : null) as ActiveBookmakerWL
+            if (bmWLS) {
+                const boommakerIds = makeUniqueItems(bmWLS.BOOKMAKER_IDS)
+                await this.redisMutiService.hset(configuration.redis.client.clientFrontEnd,
+                    bmWLS.DOMAIN_NAME, BOOKMARKER_REDIS_FIELD, boommakerIds);
+                return {
+                    domain_name,
+                    bookmaker_ids: boommakerIds.split(','),
+                } as ActiveBookmakerWLDto
+            }
+            return {
+                domain_name,
+                bookmaker_ids: [],
+            } as ActiveBookmakerWLDto
+
+        } catch (err) {
+            this.logger.error(`get  a white label bookMaker ${err}`, BookMakerService.name);
         }
     }
 

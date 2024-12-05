@@ -33,8 +33,15 @@ export class BookMakerController {
         }
     }
 
-
-
+    @Get('white-label-bookmaker/:domain_name')
+    async getWhiteLabelBookMaker(@Param('domain_name') domain_name: string) {
+        try {
+            const data = await this.bookMakerService.getWhiteLabelBookMaker(domain_name);
+            return new ApiResponseDto(ApiMessage.SUCCESS, data ?? null);
+        } catch (err) {
+            return new ApiResponseDto(ApiMessage.ERROR, 'Something went wrong')
+        }
+    }
 
 
 }
