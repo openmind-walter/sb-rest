@@ -84,6 +84,21 @@ export class RedisMultiService implements OnModuleDestroy {
     return this.clients[clientName];
   }
 
+  async hset(client: string, key: string, field: string, value:string) {
+    const redis = this.getClient(client);
+    if (redis)
+      await redis.hset(key, field, value);
+  }
+
+
+  async hGet(client: string, key: string, field: string) {
+    const redis = this.getClient(client);
+    if (redis) {
+      return await redis.hget(key, field);
+    }
+    return null; 
+  }
+
   async onModuleDestroy() {
     for (const client of Object.values(this.clients)) {
       await client.quit();

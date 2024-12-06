@@ -1,6 +1,6 @@
 export class BookmakerRunner {
     name: string;
-    selection_id: string;
+    selection_id: number;
     back_price: number;
     lay_price: number;
     back_volume: number;
@@ -21,12 +21,14 @@ export enum BookmakerRunnerStaus {
 
 
 export class BookmakerData {
+    bookmaker_id: string;
     bet_allow: number;
     event_id: string;
+    market_id: string;
     name: string;
     min_bet: number;
     is_active: number;
-    runners: Record<string, BookmakerRunner>;
+    runners: Record<string, BookmakerRunner> | BookmakerRunner[];
     type: BookmakerType;
     status: BookmakerStaus;
     max_profit: number;

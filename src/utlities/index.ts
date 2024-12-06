@@ -73,7 +73,7 @@ export function parseFancyResponse(response) {
 
 
 
-export function parseBookmakerResponse(response: { status: number; data: any[] }): BookmakerData[] | null {
+export function parseBookmakerResponse(response: { status: number; data: any[] }, market_id): BookmakerData[] | null {
   if (response.status !== 200) {
     console.error("Invalid response status:", response.status);
     return null;
@@ -82,14 +82,14 @@ export function parseBookmakerResponse(response: { status: number; data: any[] }
 
   return data.map((item) => {
     // console.log(item);
-    const { bookmaker_id, data } = item;
+    const { data } = item;
 
     const parsedRunners: Record<string, BookmakerRunner> = Object.entries(
       JSON.parse(data?.runners)
     ).reduce((acc, [key, runner]: [string, any]) => {
       acc[key] = {
         name: runner.name,
-        selection_id: runner.selection_id,
+        selection_id: Number(runner.selection_id),
         back_price: Number(runner.back_price),
         lay_price: Number(runner.lay_price),
         back_volume: Number(runner.back_volume),
@@ -101,12 +101,14 @@ export function parseBookmakerResponse(response: { status: number; data: any[] }
     }, {} as Record<string, BookmakerRunner>);
     // console.log(item)
     return {
+      bookmaker_id: item.bookmaker_id,
+      market_id: market_id?.replace("1.", "3."),
       bet_allow: Number(data?.bet_allow),
       event_id: data?.event_id,
       name: data?.name,
       min_bet: Number(data?.min_bet),
       is_active: Number(data?.is_active),
-      runners: parsedRunners,
+      runners: transformBookMakerRunners(parsedRunners as Record<string, BookmakerRunner>),
       type: data?.type as BookmakerType,
       status: data?.status as BookmakerStaus,
       max_profit: Number(data?.max_profit),
@@ -117,4 +119,12 @@ export function parseBookmakerResponse(response: { status: number; data: any[] }
       is_other_rate_active: Number(data?.is_other_rate_active),
     };
   });
+}
+
+export function transformBookMakerRunners(runners: Record<string, BookmakerRunner>): BookmakerRunner[] {
+  return Object.values(runners);
+}
+export function makeUniqueItems(input: string): string {
+  const uniqueItems = [...new Set(input.split(','))];
+  return uniqueItems.join(',');
 }

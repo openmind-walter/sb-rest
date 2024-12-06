@@ -1,14 +1,13 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
 import { LoggerService } from 'src/common/logger.service';
 import configuration from 'src/configuration';
-import { FancyEvent, MaraketStaus } from 'src/model/fancy';
-import { PlaceBet, SIDE } from 'src/model/placebet';
+import { FancyEvent, FancyEventMarket, MaraketStaus } from 'src/model/fancy';
 import { RedisMultiService } from 'src/redis/redis.multi.service';
-import { CachedKeys, generateGUID } from 'src/utlities';
+import { CachedKeys } from 'src/utlities';
 import { FancyService } from './fancy.service';
 import { FancyMarketUpdateDto } from '../dto/fancy.market.update.dto ';
+import { EventsResult } from 'src/model/eventsResult';
+import { RestService } from './rest.service';
 
 @Injectable()
 export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
@@ -17,12 +16,13 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
     constructor(
         private readonly redisMutiService: RedisMultiService,
         private readonly facncyService: FancyService,
-        private configService: ConfigService,
-        private logger: LoggerService
+        private logger: LoggerService,
+        private restService: RestService
+
     ) { }
 
     onModuleInit() {
-        this.fancyEventUpdateInterval = setInterval(() => this.fancyEventUpdate(), 500);
+        this.fancyEventUpdateInterval = setInterval(() => this.fancyEventUpdate(), 1000);
     }
 
     onModuleDestroy() {
@@ -39,7 +39,6 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
             const activeFancies = activeFancyEventsData?.length > 0
                 ? activeFancyEventsData.map(e => e.replace(configuration.fancy.topic, ''))
                 : [];
-
             if (activeFancies.length > 0) {
                 const fancyEvents = await this.fetchFancyEvents(activeFancies);
                 await this.batchWriteToRedis(fancyEvents);
@@ -55,8 +54,6 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
                 // Fetch the event data from the API
                 const oldfancy = await this.facncyService.getExitFancyMarket(eventId);
                 const fancyApiEvent = await this.facncyService.getFancyAPiEvent(eventId);
-                //to  be replace later
-                // return fancyApiEvent;
                 if (!fancyApiEvent) return oldfancy;
                 if (oldfancy) {
                     return this.facncyService.resolveEventMarketConflicts(oldfancy, fancyApiEvent);
@@ -66,7 +63,6 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
             })
         );
 
-        // Filter out any null entries to return only valid fancy events
         return activeFancies
             .map((eventId, index) => ({ eventId, fancyEvent: fancyEvents[index] }))
             .filter(({ fancyEvent }) => fancyEvent !== null);
@@ -76,8 +72,6 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
         const batchSize = 100;
         const batches = [];
 
-
-
         for (let i = 0; i < fancyEvents.length; i += batchSize) {
             batches.push(fancyEvents);
         }
@@ -86,8 +80,6 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
             await Promise.all(
                 batch.map(async ({ eventId, fancyEvent }) => {
                     try {
-
-                        // await this.checkBetSettlement(eventId, fancyEvent);
                         const fancyStringfy = JSON.stringify(fancyEvent)
                         await this.redisMutiService.set(
                             configuration.redis.client.clientBackEnd,
@@ -95,12 +87,15 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
                             3600,
                             fancyStringfy
                         );
-
-                        await Promise.all(fancyEvent?.markets?.map(fancyEventMarket =>
-                            this.redisMutiService.publish(configuration.redis.client.clientFrontEndPub,
-                                `sb_${fancyEvent.eventId}_${fancyEventMarket}`, JSON.stringify(FancyMarketUpdateDto.fromFancyEventMarket(fancyEventMarket)))))
-
-                        //  fancyEvent: { event_id: '30816332', markets: [Array] }
+                        await Promise.all(fancyEvent?.markets?.map(async (fancyEventMarket: FancyEventMarket) => {
+                            await this.redisMutiService.publish(configuration.redis.client.clientFrontEndPub,
+                                `${fancyEventMarket.id}__fancy0`, JSON.stringify(FancyMarketUpdateDto.fromFancyEventMarket(fancyEventMarket)))
+                            if (fancyEventMarket.status1 == MaraketStaus.REMOVED || fancyEventMarket.status1 == MaraketStaus.CLOSED) {
+                                const eventsResult = EventsResult.getFromFancy(fancyEventMarket, eventId);
+                                await this.restService.createEventsResult(eventsResult)
+                            }
+                        }
+                        ))
 
                     } catch (error) {
                         this.logger.error(`Error writing fancy event  to Redis: ${error.message}`, FancyUpdateService.name);
@@ -111,80 +106,8 @@ export class FancyUpdateService implements OnModuleInit, OnModuleDestroy {
         }
     }
 
-
-    async checkBetSettlement(eventId: string, fancyEvent: FancyEvent) {
-        try {
-            if (Array.isArray(fancyEvent?.markets)) {
-                for (const market of fancyEvent.markets) {
-                    if (market.status1 === MaraketStaus.REMOVED || market.status1 === MaraketStaus.CLOSED) {
-                        const response = await axios.get(`${this.configService.get("API_SERVER_URL")}/v1/api/bf_placebet/event_market_pending/${eventId}/${market.id}`);
-                        const bets: PlaceBet[] = response?.data?.result ?? [];
-
-                        for (const bet of bets) {
-                            if (market.status1 === MaraketStaus.CLOSED) {
-                                if (
-                                    (bet.SIDE === SIDE.BACK && market.result >= bet.PRICE) ||
-                                    (bet.SIDE === SIDE.LAY && market.result < bet.PRICE)
-                                ) {
-                                    // win logic
-                                    await this.betSettlement(bet.ID, 1, bet.SIZE)
-                                } else {
-                                    // lost logic
-                                    await this.betSettlement(bet.ID, 0, bet.SIZE)
-                                }
-                            } else {
-
-                                // voided logic
-
-
-                            }
-                        }
-                    }
-
-                    // clean market details  not   have  place bets
-
-
-                }
-            }
-        } catch (error) {
-            console.log(error);
-            this.logger.error(`Error on  check fancy bet settlement: ${error.message}`, FancyUpdateService.name);
-        }
-    }
-
-
-    async betSettlement(BF_PLACEBET_ID: number, RESULT: 0 | 1, BF_SIZE: number) {
-        try {
-            const BF_BET_ID = generateGUID();
-            const respose = (await axios.post(`${process.env.API_SERVER_URL}/v1/api/bf_settlement/fancy`, { BF_BET_ID, BF_PLACEBET_ID, RESULT, BF_SIZE }))?.data;
-            if (!respose?.result)
-                this.logger.error(`Error on  bet settlement: ${respose}`, FancyUpdateService.name);
-        } catch (error) {
-            this.logger.error(`Error on fancy bet settlement: ${error.message}`, FancyUpdateService.name);
-        }
-    }
-
-
 }
 
 
 
 
-// var betType = cricketFanciesTransaction.getCricketFanciesBetType();
-// var price = cricketFanciesTransaction.getPrice();
-// if (cricketFanciesResult.isVoidMarket()) {
-//   cricketFanciesTransaction.setCricketFancyBetStatus(CricketFancyBetStatus.VOID);
-// } else if ((betType.isYes() && cricketFanciesResult.getPriceResult() >= price)
-//     || (betType.isNo() && cricketFanciesResult.getPriceResult() < price)) {
-//   cricketFanciesTransaction.setCricketFancyBetStatus(CricketFancyBetStatus.WON);
-// } else {
-//   cricketFanciesTransaction.setCricketFancyBetStatus(CricketFancyBetStatus.LOST);
-// }
-// cricketFanciesTransaction.setSettledDate(new Date());
-// var account =
-//     accountRepository.getAccountById(cricketFanciesTransaction.getAccountId(), true);
-// var placedTransaction = cricketFanciesTransaction.getAccountTransaction();
-// if (placedTransaction == null) {
-//   throw new WinLossCalculationException(
-//       "Can't find the placed transaction for " + cricketFanciesTransaction);
-// }

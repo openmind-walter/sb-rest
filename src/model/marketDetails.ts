@@ -35,3 +35,9 @@ export class MarketType {
 }
 
 
+
+export class SelectionDetails {
+  ID?: number; // BIGSERIAL
+  EXTERNAL_SELECTION_ID: number; // bigint NOT NULL
+  SELECTION_NAME: string; // character varying(255) NOT NULL DEFAULT ''
+}
